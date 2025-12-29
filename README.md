@@ -1,156 +1,175 @@
-# MoreLife Healthcare
+# MoreLife - Healthcare Package Management System
 
-A digital ecosystem connecting patients with quality healthcare providers across Africa. MoreLife Healthcare provides transparent, fixed-price healthcare packages and a comprehensive marketplace for accessible healthcare services.
+A modern healthcare package management platform connecting patients with healthcare providers across Africa.
 
-## Features
+## 🌟 Features
 
 ### For Patients
-- **Patient Registration & Dashboard**: Create an account and manage your healthcare profile
-- **Digital Health Card**: Unique MH-Number with QR code for seamless access at provider facilities
-- **Subscription Management**: Choose from Single, Family, or Corporate subscription plans
-- **Healthcare Marketplace**: Browse and purchase transparent, fixed-price healthcare packages
-- **Account Details**: Manage personal information including name, date of birth, location, and mobile number
+
+- **Multi-tier Registration**: Single, Family, and Corporate membership options
+- **Package Marketplace**: Browse and purchase healthcare packages from verified providers
+- **QR Code Redemption**: Secure package redemption via unique QR codes
+- **Purchase History**: Track all purchased packages and redemption status
+- **Premium Dashboard**: Modern, glassmorphic UI with real-time updates
 
 ### For Healthcare Providers
-- **Provider Registration**: Free registration for hospitals, clinics, health centres, and mobile clinics
-- **Provider Dashboard**: Manage provider information and create healthcare packages
-- **Package Creation**: Create and manage healthcare packages with:
-  - Fixed pricing (or free for charity/government programs)
-  - Treatment types (Maternity, Dental, Malaria, Eye Treatment, etc.)
-  - Duration settings (2 weeks, 6 months, 1 year, etc.)
-  - Comprehensive descriptions
 
-## Tech Stack
+- **Provider Registration**: Comprehensive onboarding with document verification
+- **Package Management**: Create, edit, and manage healthcare packages
+- **Redemption System**: Scan and verify patient QR codes
+- **Analytics Dashboard**: Track redemptions, revenue, and package performance
+- **Multi-currency Support**: African currency support with automatic conversion
 
-- **Framework**: Next.js 16.1.1
+## 🛠️ Tech Stack
+
+- **Framework**: Next.js 15 (App Router)
 - **Language**: TypeScript
-- **Styling**: Tailwind CSS 4
-- **Database**: Prisma with SQLite
-- **Authentication**: bcryptjs for password hashing
-- **QR Code**: qrcode.react for digital health cards
+- **Database**: PostgreSQL with Prisma ORM
+- **Styling**: Tailwind CSS
+- **Icons**: Lucide React
+- **Authentication**: Custom session-based auth
+- **QR Codes**: qrcode library
 
-## Getting Started
+## 📦 Database Schema
+
+### Core Models
+
+- **Patient**: User accounts with subscription tiers (Single/Family/Corporate)
+- **HealthcareProvider**: Verified healthcare service providers
+- **HealthcarePackage**: Service packages offered by providers
+- **PackagePurchase**: Transaction records with QR codes for redemption
+
+## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js 18+ installed
-- npm or yarn package manager
+- Node.js 18+
+- PostgreSQL database
+- npm or pnpm
 
 ### Installation
 
-1. Clone the repository:
+1. Clone the repository
+
 ```bash
-git clone <repository-url>
+git clone https://github.com/gbabudoh/morelife.git
 cd morelife
 ```
 
-2. Install dependencies:
+2. Install dependencies
+
 ```bash
 npm install
 ```
 
-3. Set up the database:
+3. Set up environment variables
+
 ```bash
-# Create .env file
-echo 'DATABASE_URL="file:./dev.db"' > .env
-
-# Generate Prisma Client
-npx prisma generate
-
-# Run migrations
-npx prisma migrate dev --name init
+cp .env.example .env
 ```
 
-4. Run the development server:
+Configure your `.env` file with:
+
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/morelife"
+```
+
+4. Initialize the database
+
+```bash
+npx prisma generate
+npx prisma db push
+```
+
+5. Run the development server
+
 ```bash
 npm run dev
 ```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Project Structure
+## 📱 Application Structure
 
 ```
 morelife/
 ├── app/
-│   ├── api/              # API routes for authentication
-│   ├── patient/          # Patient pages (register, login, dashboard, marketplace)
-│   ├── provider/         # Provider pages (register, login, dashboard)
-│   ├── layout.tsx        # Root layout
-│   ├── page.tsx          # Landing page
-│   └── globals.css       # Global styles
-├── components/
-│   └── DigitalCard.tsx   # Digital health card component with QR code
+│   ├── patient/          # Patient-facing pages
+│   │   ├── register/     # Multi-step registration
+│   │   ├── login/        # Patient authentication
+│   │   └── dashboard/    # Patient dashboard with purchases
+│   ├── provider/         # Provider-facing pages
+│   │   ├── register/     # Provider onboarding
+│   │   ├── login/        # Provider authentication
+│   │   └── dashboard/    # Provider management interface
+│   └── api/              # API routes
+│       ├── patient/      # Patient APIs
+│       └── provider/     # Provider APIs
+├── lib/                  # Utilities and configurations
+│   ├── prisma.ts        # Database client
+│   ├── african-locations.ts
+│   └── african-country-codes.ts
 ├── prisma/
-│   └── schema.prisma     # Database schema
-└── public/               # Static assets (logo, icon, favicon)
+│   └── schema.prisma    # Database schema
+└── public/              # Static assets
 ```
 
-## Database Schema
+## 🎨 Design Features
 
-The application uses Prisma with the following main models:
-- **Patient**: User accounts with subscription information
-- **HealthcareProvider**: Provider accounts and business information
-- **HealthcarePackage**: Healthcare service packages created by providers
-- **PatientPackage**: Relationship between patients and purchased packages
+- **Off-White Premium Theme**: Sophisticated glassmorphic design
+- **Responsive Layout**: Mobile-first, fully responsive
+- **Smooth Animations**: Micro-interactions and transitions
+- **High Contrast**: Accessibility-focused color choices
+- **Modern Typography**: Clean, readable font hierarchy
 
-## Features Overview
+## 🔐 Authentication
 
-### Landing Page
-- Two access points: Patient Access and Healthcare Provider Access
-- Feature highlights and benefits
+- Session-based authentication using localStorage
+- Separate auth flows for patients and providers
+- Protected routes with middleware
 
-### Patient Flow
-1. Register/Login → Patient Dashboard
-2. View account details and subscription information
-3. Access digital health card with QR code
-4. Browse marketplace for healthcare packages
+## 💳 Payment & Redemption Flow
 
-### Provider Flow
-1. Register/Login → Provider Dashboard
-2. Manage provider information
-3. Create and manage healthcare packages
-4. Set pricing, duration, and treatment types
+1. **Purchase**: Patient selects and purchases packages
+2. **QR Generation**: Unique QR code created for each purchase
+3. **Verification**: Provider scans QR code
+4. **Redemption**: Package marked as redeemed with timestamp
 
-## Environment Variables
+## 🌍 African Market Focus
 
-Create a `.env` file in the root directory:
+- Support for 54+ African countries
+- Regional subdivision selection (States/Provinces)
+- African currency support (NGN, KES, ZAR, etc.)
+- Dial code integration for all African nations
 
-```env
-DATABASE_URL="file:./dev.db"
-JWT_SECRET="your-secret-key-here"
-```
+## 📊 Recent Updates
 
-## Development
+### Latest Features (Dec 2024)
 
-### Database Commands
+- ✅ Added membership quantity selection for Family/Corporate plans
+- ✅ Enhanced registration UI with premium quantity controls
+- ✅ Improved form visibility with high-contrast borders
+- ✅ Database schema updated with `memberCount` field
+- ✅ Refactored API with better type safety
 
-```bash
-# Generate Prisma Client
-npx prisma generate
+## 🤝 Contributing
 
-# Create migration
-npx prisma migrate dev --name migration_name
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-# View database in Prisma Studio
-npx prisma studio
-```
+## 📄 License
 
-### Build for Production
+This project is licensed under the MIT License.
 
-```bash
-npm run build
-npm start
-```
+## 👥 Authors
 
-## License
+- **Godwin Babudoh** - [GitHub](https://github.com/gbabudoh)
 
-This project is private and proprietary.
+## 🙏 Acknowledgments
 
-## Support
-
-For support and inquiries, please contact the MoreLife Healthcare team.
+- Built with modern web technologies
+- Designed for African healthcare accessibility
+- Focus on user experience and data security
 
 ---
 
-**MoreLife: Providing access to healthcare for a better tomorrow.**
+**⚠️ Note**: This is an active development project. Features and documentation are continuously updated.
