@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { Mail, Lock, ArrowRight, UserCircle2, ShieldCheck } from "lucide-react";
 
 export default function PatientLogin() {
   const router = useRouter();
@@ -43,75 +44,110 @@ export default function PatientLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center py-12 px-4">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-block mb-4">
-            <Image
-              src="/logo.png"
-              alt="MoreLife Healthcare"
-              width={150}
-              height={60}
-              className="object-contain mx-auto"
-            />
-          </Link>
-          <h2 className="text-3xl font-bold text-gray-900">Patient Login</h2>
-          <p className="text-gray-600 mt-2">Access your MoreLife Healthcare account</p>
-        </div>
+    <div className="min-h-screen bg-[#F8FAFC] relative flex items-center justify-center py-12 px-4 overflow-hidden">
+      {/* Background Decorative Elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-[-10%] right-[-5%] w-[400px] h-[400px] bg-blue-100/40 rounded-full blur-[100px]"></div>
+        <div className="absolute bottom-[-10%] left-[-5%] w-[400px] h-[400px] bg-emerald-100/40 rounded-full blur-[100px]"></div>
+      </div>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email Address
-            </label>
-            <input
-              type="email"
-              required
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <Link href="/patient/forgot-password" className="text-sm text-blue-600 hover:underline">
-                Forgot Password?
-              </Link>
+      <div className="max-w-md w-full relative z-10">
+        <div className="bg-white/90 backdrop-blur-3xl rounded-[3rem] shadow-[0_40px_80px_-20px_rgba(15,23,42,0.15)] p-10 sm:p-12 border border-white/50">
+          <div className="text-center mb-10">
+            <Link href="/" className="inline-block mb-6 group transition-all duration-500 hover:scale-110">
+              <Image
+                src="/logo.png"
+                alt="MoreLife Healthcare"
+                width={180}
+                height={70}
+                className="object-contain mx-auto"
+                unoptimized
+              />
+            </Link>
+            
+            <div className="inline-flex items-center gap-2 bg-blue-100/50 px-4 py-1.5 rounded-full mb-4 border border-blue-200/50">
+              <UserCircle2 size={16} className="text-blue-600" />
+              <span className="text-blue-700 font-bold text-[10px] uppercase tracking-wider">Patient Portal</span>
             </div>
-            <input
-              type="password"
-              required
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+            
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight">Welcome Back</h2>
+            <p className="text-slate-500 font-medium mt-2">Access your healthcare account and services</p>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? "Logging in..." : "Login"}
-          </button>
-        </form>
+          {error && (
+            <div className="mb-8 p-4 bg-red-50 border border-red-200 text-red-600 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-sm font-black flex-shrink-0">!</div>
+              <p className="text-sm font-bold">{error}</p>
+            </div>
+          )}
 
-        <p className="mt-6 text-center text-gray-600">
-          Don&apos;t have an account?{" "}
-          <Link href="/patient/register" className="text-blue-600 hover:underline font-semibold">
-            Register
-          </Link>
-        </p>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] pl-1">Personal Email</label>
+              <div className="relative group">
+                <Mail className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={20} />
+                <input
+                  type="email"
+                  required
+                  placeholder="name@example.com"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full pl-16 pr-8 py-5 bg-white border-2 border-slate-100 rounded-3xl text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-bold shadow-sm"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex justify-between items-center px-1">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em]">Security Pass</label>
+                <Link href="/patient/forgot-password" className="text-[10px] font-black text-blue-600 uppercase tracking-wider hover:text-blue-700 transition-colors">Forgot?</Link>
+              </div>
+              <div className="relative group">
+                <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={20} />
+                <input
+                  type="password"
+                  required
+                  placeholder="••••••••"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full pl-16 pr-8 py-5 bg-white border-2 border-slate-100 rounded-3xl text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-bold shadow-sm"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-[2rem] font-black shadow-xl shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-1 transition-all flex items-center justify-center gap-3 disabled:opacity-50 group"
+            >
+              {loading ? (
+                <div className="flex items-center gap-3">
+                  <div className="w-5 h-5 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
+                  Verifying...
+                </div>
+              ) : (
+                <>
+                  Enter Vault
+                  <ArrowRight size={22} className="group-hover:translate-x-2 transition-transform" />
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="mt-10 pt-10 border-t border-slate-100 text-center">
+            <p className="text-slate-500 font-bold tracking-tight">
+              New to the ecosystem?{" "}
+              <Link href="/patient/register" className="text-blue-600 hover:text-blue-700 font-black ml-1 transition-all border-b-2 border-blue-600/10 hover:border-blue-600">
+                Create Account
+              </Link>
+            </p>
+          </div>
+        </div>
+        
+        <div className="mt-8 flex items-center justify-center gap-2 text-slate-400">
+          <ShieldCheck size={16} />
+          <span className="text-xs font-bold uppercase tracking-[0.1em]">Secure Multi-Factor Authentication</span>
+        </div>
       </div>
     </div>
   );

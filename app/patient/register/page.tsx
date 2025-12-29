@@ -135,49 +135,46 @@ export default function PatientRegister() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] relative flex items-center justify-center py-12 px-4 overflow-hidden">
-      {/* Subtle Light Mesh Background */}
-      <div className="absolute inset-0 z-0 overflow-hidden">
-        <div className="absolute top-[-20%] left-[-10%] w-[70%] h-[70%] bg-blue-100 rounded-full blur-[120px] animate-pulse"></div>
-        <div className="absolute bottom-[-10%] right-[-5%] w-[60%] h-[60%] bg-emerald-50 rounded-full blur-[120px] animate-pulse" style={{ animationDelay: '3s' }}></div>
-        <div className="absolute top-[20%] right-[10%] w-[40%] h-[40%] bg-indigo-50 rounded-full blur-[100px]"></div>
+      {/* Premium Mesh Background */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-[-20%] left-[-10%] w-[80%] h-[80%] bg-blue-100/40 rounded-full blur-[120px]"></div>
+        <div className="absolute bottom-[-10%] right-[-5%] w-[70%] h-[70%] bg-emerald-100/30 rounded-full blur-[120px]"></div>
+        <div className="absolute top-[20%] right-[10%] w-[50%] h-[50%] bg-indigo-100/20 rounded-full blur-[100px]"></div>
       </div>
 
       <div className="max-w-xl w-full relative z-10">
         <div className="bg-gradient-to-b from-white/95 to-white/80 backdrop-blur-3xl rounded-[3.5rem] shadow-[0_40px_80px_-20px_rgba(15,23,42,0.15)] p-10 sm:p-12 border border-white/50">
           <div className="text-center mb-10">
-            <Link href="/" className="inline-block mb-6 group transition-all duration-500 hover:scale-110">
-              <div className="flex items-center gap-3 bg-white px-6 py-3 rounded-full shadow-sm border border-slate-100">
-                <div className="relative w-8 h-8">
-                  <Image 
-                    src="/icon.png" 
-                    alt="MoreLife Icon" 
-                    fill 
-                    className="object-contain"
-                  />
-                </div>
-                <span className="text-slate-900 font-black tracking-tighter text-xl">MORELIFE</span>
-              </div>
+            <Link href="/" className="inline-block mb-10 group transition-all duration-500 hover:scale-110">
+              <Image
+                src="/logo.png"
+                alt="MoreLife Healthcare"
+                width={200}
+                height={80}
+                className="object-contain mx-auto"
+                unoptimized
+              />
             </Link>
             <h2 className="text-4xl font-black text-slate-900 tracking-tight mb-2">Create Account</h2>
             <p className="text-slate-500 font-medium tracking-wide uppercase text-[10px]">Start your medical journey with us</p>
           </div>
 
-          {/* Progress Indicator */}
-          <div className="flex items-center justify-between mb-12 px-2 sm:px-4">
+          {/* High-Visibility Progress Indicator */}
+          <div className="flex items-center justify-between mb-12 px-2 sm:px-6">
             {[1, 2, 3].map((step) => (
               <div key={step} className="flex items-center flex-1 last:flex-none">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-700 border-2 ${
+                <div className={`w-14 h-14 rounded-[1.25rem] flex items-center justify-center transition-all duration-500 border-2 ${
                   step === currentStep 
-                    ? "bg-blue-600 border-blue-400 shadow-[0_0_30px_rgba(37,99,235,0.4)] text-white scale-110" 
+                    ? "bg-blue-600 border-blue-400 shadow-[0_15px_30px_-5px_rgba(37,99,235,0.4)] text-white scale-110" 
                     : step < currentStep 
-                    ? "bg-emerald-500 border-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.3)] text-white" 
-                    : "bg-white/5 border-white/10 text-gray-500"
+                    ? "bg-emerald-500 border-emerald-400 shadow-lg text-white" 
+                    : "bg-white border-slate-200 text-slate-400"
                 }`}>
-                  {step < currentStep ? <Check size={20} strokeWidth={3} /> : <span className="font-black text-lg">{step}</span>}
+                  {step < currentStep ? <Check size={24} strokeWidth={3} /> : <span className="font-black text-xl">{step}</span>}
                 </div>
                 {step < totalSteps && (
-                  <div className={`h-1 flex-1 mx-3 rounded-full transition-all duration-1000 ${
-                    step < currentStep ? "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.2)]" : "bg-slate-200"
+                  <div className={`h-1.5 flex-1 mx-4 rounded-full transition-all duration-700 ${
+                    step < currentStep ? "bg-emerald-500 shadow-sm" : "bg-slate-200"
                   }`}></div>
                 )}
               </div>
@@ -204,7 +201,7 @@ export default function PatientRegister() {
                       placeholder="Full Name"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full pl-16 pr-8 py-5 bg-white border border-slate-300 rounded-3xl text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-bold shadow-sm"
+                      className="w-full pl-16 pr-8 py-5 bg-white border-2 border-slate-200 rounded-3xl text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-bold shadow-sm"
                     />
                   </div>
                 </div>
@@ -219,7 +216,7 @@ export default function PatientRegister() {
                       placeholder="Email Address"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full pl-16 pr-8 py-5 bg-white border border-slate-300 rounded-3xl text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-bold shadow-sm"
+                      className="w-full pl-16 pr-8 py-5 bg-white border-2 border-slate-200 rounded-3xl text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-bold shadow-sm"
                     />
                   </div>
                 </div>
@@ -236,7 +233,7 @@ export default function PatientRegister() {
                         placeholder="••••••••"
                         value={formData.password}
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        className="w-full pl-16 pr-8 py-5 bg-white border border-slate-300 rounded-3xl text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-bold shadow-sm"
+                        className="w-full pl-16 pr-8 py-5 bg-white border-2 border-slate-200 rounded-3xl text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-bold shadow-sm"
                       />
                     </div>
                   </div>
@@ -251,7 +248,7 @@ export default function PatientRegister() {
                         placeholder="••••••••"
                         value={formData.confirmPassword}
                         onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                        className="w-full pl-16 pr-8 py-5 bg-white border border-slate-300 rounded-3xl text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-bold shadow-sm"
+                        className="w-full pl-16 pr-8 py-5 bg-white border-2 border-slate-200 rounded-3xl text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-bold shadow-sm"
                       />
                     </div>
                   </div>
@@ -284,7 +281,7 @@ export default function PatientRegister() {
                         required
                         value={formData.country}
                         onChange={(e) => handleCountryChange(e.target.value)}
-                        className="w-full pl-16 pr-12 py-5 bg-white border border-slate-300 rounded-3xl text-slate-900 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-bold appearance-none cursor-pointer shadow-sm"
+                      className="w-full pl-16 pr-12 py-5 bg-white border-2 border-slate-200 rounded-3xl text-slate-900 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-bold appearance-none cursor-pointer shadow-sm"
                       >
                         <option value="" className="bg-white">Country</option>
                         {africanCountries.map((country) => (
@@ -306,7 +303,7 @@ export default function PatientRegister() {
                         disabled={!selectedCountry}
                         value={formData.state}
                         onChange={(e) => handleStateChange(e.target.value)}
-                        className="w-full pl-16 pr-12 py-5 bg-white border border-slate-300 rounded-3xl text-slate-900 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-bold appearance-none cursor-pointer disabled:opacity-30 shadow-sm"
+                        className="w-full pl-16 pr-12 py-5 bg-white border-2 border-slate-200 rounded-3xl text-slate-900 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-bold appearance-none cursor-pointer disabled:opacity-30 shadow-sm"
                       >
                         <option value="" className="bg-white">
                           {selectedCountry ? (selectedCountry.name === "Nigeria" ? "State" : "Province") : "Region"}
@@ -330,7 +327,7 @@ export default function PatientRegister() {
                         required
                         value={formData.countryCode}
                         onChange={(e) => setFormData({ ...formData, countryCode: e.target.value })}
-                        className="w-full h-full pl-6 pr-10 py-5 bg-white border border-slate-300 rounded-3xl text-slate-900 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-black appearance-none cursor-pointer shadow-sm"
+                        className="w-full h-full pl-6 pr-10 py-5 bg-white border-2 border-slate-200 rounded-3xl text-slate-900 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-black appearance-none cursor-pointer shadow-sm"
                       >
                         {africanCountryCodes.map((country) => (
                           <option key={country.code} value={country.dialCode} className="bg-white">
@@ -348,7 +345,7 @@ export default function PatientRegister() {
                         placeholder="800 000 0000"
                         value={formData.mobileNumber}
                         onChange={(e) => setFormData({ ...formData, mobileNumber: e.target.value.replace(/\D/g, "") })}
-                        className="w-full pl-16 pr-8 py-5 bg-white border border-slate-300 rounded-3xl text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-bold shadow-sm"
+                        className="w-full pl-16 pr-8 py-5 bg-white border-2 border-slate-200 rounded-3xl text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-bold shadow-sm"
                       />
                     </div>
                   </div>
@@ -400,7 +397,7 @@ export default function PatientRegister() {
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] pl-1">
                       {formData.subscriptionType === "FAMILY" ? "Family Group Size" : "Corporate Headcount"}
                     </label>
-                    <div className="bg-white border border-slate-300 rounded-[2rem] p-4 flex items-center justify-between shadow-sm">
+                    <div className="bg-white border-2 border-slate-200 rounded-[2rem] p-4 flex items-center justify-between shadow-sm focus-within:border-blue-500 transition-all">
                       <div className="flex items-center gap-4 pl-4">
                         <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400">
                           {formData.subscriptionType === "FAMILY" ? <Users size={20} /> : <Briefcase size={20} />}
