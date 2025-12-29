@@ -1,36 +1,156 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MoreLife Healthcare
+
+A digital ecosystem connecting patients with quality healthcare providers across Africa. MoreLife Healthcare provides transparent, fixed-price healthcare packages and a comprehensive marketplace for accessible healthcare services.
+
+## Features
+
+### For Patients
+- **Patient Registration & Dashboard**: Create an account and manage your healthcare profile
+- **Digital Health Card**: Unique MH-Number with QR code for seamless access at provider facilities
+- **Subscription Management**: Choose from Single, Family, or Corporate subscription plans
+- **Healthcare Marketplace**: Browse and purchase transparent, fixed-price healthcare packages
+- **Account Details**: Manage personal information including name, date of birth, location, and mobile number
+
+### For Healthcare Providers
+- **Provider Registration**: Free registration for hospitals, clinics, health centres, and mobile clinics
+- **Provider Dashboard**: Manage provider information and create healthcare packages
+- **Package Creation**: Create and manage healthcare packages with:
+  - Fixed pricing (or free for charity/government programs)
+  - Treatment types (Maternity, Dental, Malaria, Eye Treatment, etc.)
+  - Duration settings (2 weeks, 6 months, 1 year, etc.)
+  - Comprehensive descriptions
+
+## Tech Stack
+
+- **Framework**: Next.js 16.1.1
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS 4
+- **Database**: Prisma with SQLite
+- **Authentication**: bcryptjs for password hashing
+- **QR Code**: qrcode.react for digital health cards
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 18+ installed
+- npm or yarn package manager
+
+### Installation
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository-url>
+cd morelife
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Set up the database:
+```bash
+# Create .env file
+echo 'DATABASE_URL="file:./dev.db"' > .env
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Generate Prisma Client
+npx prisma generate
 
-## Learn More
+# Run migrations
+npx prisma migrate dev --name init
+```
 
-To learn more about Next.js, take a look at the following resources:
+4. Run the development server:
+```bash
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+5. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project Structure
 
-## Deploy on Vercel
+```
+morelife/
+├── app/
+│   ├── api/              # API routes for authentication
+│   ├── patient/          # Patient pages (register, login, dashboard, marketplace)
+│   ├── provider/         # Provider pages (register, login, dashboard)
+│   ├── layout.tsx        # Root layout
+│   ├── page.tsx          # Landing page
+│   └── globals.css       # Global styles
+├── components/
+│   └── DigitalCard.tsx   # Digital health card component with QR code
+├── prisma/
+│   └── schema.prisma     # Database schema
+└── public/               # Static assets (logo, icon, favicon)
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Database Schema
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The application uses Prisma with the following main models:
+- **Patient**: User accounts with subscription information
+- **HealthcareProvider**: Provider accounts and business information
+- **HealthcarePackage**: Healthcare service packages created by providers
+- **PatientPackage**: Relationship between patients and purchased packages
+
+## Features Overview
+
+### Landing Page
+- Two access points: Patient Access and Healthcare Provider Access
+- Feature highlights and benefits
+
+### Patient Flow
+1. Register/Login → Patient Dashboard
+2. View account details and subscription information
+3. Access digital health card with QR code
+4. Browse marketplace for healthcare packages
+
+### Provider Flow
+1. Register/Login → Provider Dashboard
+2. Manage provider information
+3. Create and manage healthcare packages
+4. Set pricing, duration, and treatment types
+
+## Environment Variables
+
+Create a `.env` file in the root directory:
+
+```env
+DATABASE_URL="file:./dev.db"
+JWT_SECRET="your-secret-key-here"
+```
+
+## Development
+
+### Database Commands
+
+```bash
+# Generate Prisma Client
+npx prisma generate
+
+# Create migration
+npx prisma migrate dev --name migration_name
+
+# View database in Prisma Studio
+npx prisma studio
+```
+
+### Build for Production
+
+```bash
+npm run build
+npm start
+```
+
+## License
+
+This project is private and proprietary.
+
+## Support
+
+For support and inquiries, please contact the MoreLife Healthcare team.
+
+---
+
+**MoreLife: Providing access to healthcare for a better tomorrow.**

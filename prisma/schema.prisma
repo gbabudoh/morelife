@@ -1,0 +1,154 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Patient {
+  id               String            @id @default(cuid())
+  email            String            @unique
+  password         String
+  name             String
+  dateOfBirth      DateTime
+  mhNumber         String            @unique
+  location         String
+  mobileNumber     String
+  subscriptionType SubscriptionType  @default(SINGLE)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  memberCount      Int               @default(1)
+  purchases        PackagePurchase[]
+  packages         PatientPackage[]
+}
+
+model HealthcareProvider {
+  id                         String              @id @default(cuid())
+  email                      String              @unique
+  password                   String
+  providerName               String
+  contactPerson              String
+  category                   ProviderCategory
+  providerType               ProviderType
+  location                   String
+  contactTelephone           String
+  createdAt                  DateTime            @default(now())
+  updatedAt                  DateTime            @updatedAt
+  businessRegistrationDoc    String?
+  businessRegistrationNumber String?
+  environmentalImpactCert    String?
+  fireSafetyCert             String?
+  laboratoryPermit           String?
+  liabilityInsurance         String?
+  malpracticeInsurance       String?
+  medicalLicenseDoc          String?
+  pharmacyPermit             String?
+  professionalLicenseDocs    String?
+  radiologyPermit            String?
+  rejectionReason            String?
+  surgicalTheaterPermit      String?
+  verificationStatus         VerificationStatus  @default(PENDING)
+  verifiedAt                 DateTime?
+  verifiedBy                 String?
+  wasteManagementCert        String?
+  yearStarted                Int?
+  packages                   HealthcarePackage[]
+  purchases                  PackagePurchase[]
+}
+
+model HealthcarePackage {
+  id              String             @id @default(cuid())
+  providerId      String
+  name            String
+  description     String?
+  price           Float
+  duration        String
+  treatmentType   String
+  isFree          Boolean            @default(false)
+  isActive        Boolean            @default(true)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  provider        HealthcareProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  purchases       PackagePurchase[]
+  patientPackages PatientPackage[]
+}
+
+model PatientPackage {
+  id          String            @id @default(cuid())
+  patientId   String
+  packageId   String
+  purchasedAt DateTime          @default(now())
+  expiresAt   DateTime?
+  isActive    Boolean           @default(true)
+  package     HealthcarePackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  patient     Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
+}
+
+model PackagePurchase {
+  id               String             @id @default(cuid())
+  serialNumber     String             @unique
+  patientId        String
+  packageId        String
+  providerId       String
+  purchaseDate     DateTime           @default(now())
+  redemptionStatus RedemptionStatus   @default(PENDING)
+  redeemedAt       DateTime?
+  redeemedBy       String?
+  qrCodeData       String
+  price            Float
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  package          HealthcarePackage  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  patient          Patient            @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  provider         HealthcareProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+}
+
+enum SubscriptionType {
+  SINGLE
+  FAMILY
+  CORPORATE
+}
+
+enum ProviderCategory {
+  CLINIC
+  HOSPITAL
+  HEALTH_CENTRE
+  MOBILE_CLINIC
+  MEDICAL_CENTRE
+  DENTAL_CLINIC
+  EYE_CLINIC
+  PLASTIC_SURGERY_CLINIC
+  MEDICAL_CHARITY
+  PHARMACY
+  LABORATORY
+  DIAGNOSTIC_CENTER
+}
+
+enum ProviderType {
+  DENTAL
+  GENERAL_HOSPITAL
+  COSMETICS
+  OPTICIAN
+  SPECIALIST_HOSPITAL
+  MEDICAL_CENTRE
+  MEDICAL_CHARITY
+  PRIMARY_HEALTH_CENTRE
+  COMMUNITY_HEALTH_CENTRE
+  MATERNITY_CLINIC
+  PEDIATRIC_CLINIC
+}
+
+enum VerificationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  UNDER_REVIEW
+}
+
+enum RedemptionStatus {
+  PENDING
+  REDEEMED
+  EXPIRED
+  CANCELLED
+}
