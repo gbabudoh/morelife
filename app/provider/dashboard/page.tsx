@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import ProviderPaymentSettings from "@/components/ProviderPaymentSettings";
+import { formatMHPNumber } from "@/lib/mhp-generator";
 import { 
   Building2, 
   User, 
@@ -26,7 +28,9 @@ import {
   ShieldCheck,
   X,
   Eye,
-  Edit
+  Edit,
+  CreditCard,
+  IdCard
 } from "lucide-react";
 import { getCurrencyByLocation } from "@/lib/african-currencies";
 
@@ -39,6 +43,9 @@ interface ProviderData {
   location: string;
   contactTelephone: string;
   email: string;
+  mhpNumber: string;
+  isActive: boolean;
+  isRevoked: boolean;
 }
 
 interface HealthcarePackage {
@@ -50,6 +57,10 @@ interface HealthcarePackage {
   treatmentType: string;
   isFree: boolean;
   isActive: boolean;
+  validFrom?: string;
+  validUntil?: string;
+  termsAndConditions?: string;
+  mhpId?: string;
 }
 
 export default function ProviderDashboard() {
@@ -65,12 +76,17 @@ export default function ProviderDashboard() {
     duration: "",
     treatmentType: "",
     isFree: false,
+    validFrom: "",
+    validUntil: "",
+    termsAndConditions: "",
+    mhpId: "",
   });
 
   // Modal states
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showPaymentSettings, setShowPaymentSettings] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<HealthcarePackage | null>(null);
   const [updateForm, setUpdateForm] = useState({
     name: "",
@@ -79,6 +95,10 @@ export default function ProviderDashboard() {
     duration: "",
     treatmentType: "",
     isFree: false,
+    validFrom: "",
+    validUntil: "",
+    termsAndConditions: "",
+    mhpId: "",
   });
 
   useEffect(() => {
@@ -123,6 +143,10 @@ export default function ProviderDashboard() {
       treatmentType: packageForm.treatmentType,
       isFree: packageForm.isFree,
       isActive: true,
+      validFrom: packageForm.validFrom,
+      validUntil: packageForm.validUntil,
+      termsAndConditions: packageForm.termsAndConditions,
+      mhpId: packageForm.mhpId,
     };
     setPackages([...packages, newPackage]);
     setPackageForm({
@@ -132,6 +156,10 @@ export default function ProviderDashboard() {
       duration: "",
       treatmentType: "",
       isFree: false,
+      validFrom: "",
+      validUntil: "",
+      termsAndConditions: "",
+      mhpId: "",
     });
     setShowPackageForm(false);
   };
@@ -150,6 +178,10 @@ export default function ProviderDashboard() {
       duration: pkg.duration,
       treatmentType: pkg.treatmentType,
       isFree: pkg.isFree,
+      validFrom: pkg.validFrom || "",
+      validUntil: pkg.validUntil || "",
+      termsAndConditions: pkg.termsAndConditions || "",
+      mhpId: pkg.mhpId || "",
     });
     setShowUpdateModal(true);
   };
@@ -168,6 +200,10 @@ export default function ProviderDashboard() {
             duration: updateForm.duration,
             treatmentType: updateForm.treatmentType,
             isFree: updateForm.isFree,
+            validFrom: updateForm.validFrom,
+            validUntil: updateForm.validUntil,
+            termsAndConditions: updateForm.termsAndConditions,
+            mhpId: updateForm.mhpId,
           }
         : pkg
     );
@@ -191,6 +227,28 @@ export default function ProviderDashboard() {
   const handleLogout = () => {
     localStorage.removeItem('providerId');
     router.push('/provider/login');
+  };
+
+  const handleSavePaymentSettings = async (settings: any) => {
+    try {
+      const providerId = localStorage.getItem('providerId');
+      const response = await fetch('/api/provider/payment-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ providerId, settings }),
+      });
+
+      if (response.ok) {
+        alert('Payment settings saved successfully!');
+        setShowPaymentSettings(false);
+      } else {
+        const data = await response.json();
+        alert(`Error: ${data.error}`);
+      }
+    } catch (error) {
+      console.error('Error saving payment settings:', error);
+      alert('Failed to save payment settings');
+    }
   };
 
   const currency = provider ? getCurrencyByLocation(provider.location) : { symbol: "₦", code: "NGN" };
@@ -233,13 +291,13 @@ export default function ProviderDashboard() {
         <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/40 border-b border-white/40 shadow-[0_4px_30px_rgba(0,0,0,0.03)] transition-all duration-300">
           <div className="container mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
-              <Link href="/" className="flex items-center group">
+              <Link href="/" className="flex items-center group cursor-pointer">
                 <Image
                   src="/logo.png"
                   alt="MoreLife Healthcare"
                   width={160}
                   height={64}
-                  className="object-contain transition-all duration-500 group-hover:scale-105 group-hover:drop-shadow-lg"
+                  className="object-contain transition-all duration-500 group-hover:scale-105 group-hover:drop-shadow-lg cursor-pointer"
                 />
               </Link>
               <div className="flex items-center gap-6">
@@ -248,18 +306,25 @@ export default function ProviderDashboard() {
                   <span className="text-sm font-bold text-blue-600 uppercase tracking-widest leading-none mt-1">{provider.contactPerson}</span>
                 </div>
                 <nav className="flex items-center gap-3">
+                  <button
+                    onClick={() => setShowPaymentSettings(true)}
+                    className="px-6 py-2.5 bg-green-600/10 text-green-600 hover:bg-green-600 hover:text-white font-bold rounded-2xl transition-all duration-300 flex items-center gap-2 border border-green-600/10 hover:border-green-600 hover:shadow-lg hover:shadow-green-600/20 cursor-pointer"
+                  >
+                    <CreditCard size={18} className="cursor-pointer" />
+                    <span className="hidden sm:inline">Payments</span>
+                  </button>
                   <Link
                     href="/provider/dashboard/redemptions"
-                    className="px-6 py-2.5 bg-blue-600/10 text-blue-600 hover:bg-blue-600 hover:text-white font-bold rounded-2xl transition-all duration-300 flex items-center gap-2 border border-blue-600/10 hover:border-blue-600 hover:shadow-lg hover:shadow-blue-600/20"
+                    className="px-6 py-2.5 bg-blue-600/10 text-blue-600 hover:bg-blue-600 hover:text-white font-bold rounded-2xl transition-all duration-300 flex items-center gap-2 border border-blue-600/10 hover:border-blue-600 hover:shadow-lg hover:shadow-blue-600/20 cursor-pointer"
                   >
-                    <QrCode size={18} />
+                    <QrCode size={18} className="cursor-pointer" />
                     <span className="hidden sm:inline">Redemptions</span>
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="px-6 py-2.5 bg-gray-500/10 text-gray-700 hover:bg-gray-700 hover:text-white font-bold rounded-2xl transition-all duration-300 flex items-center gap-2 border border-gray-500/10 hover:border-gray-700 hover:shadow-lg hover:shadow-gray-700/20"
+                    className="px-6 py-2.5 bg-gray-500/10 text-gray-700 hover:bg-gray-700 hover:text-white font-bold rounded-2xl transition-all duration-300 flex items-center gap-2 border border-gray-500/10 hover:border-gray-700 hover:shadow-lg hover:shadow-gray-700/20 cursor-pointer"
                   >
-                    <LogOut size={18} />
+                    <LogOut size={18} className="cursor-pointer" />
                     <span className="hidden sm:inline">Logout</span>
                   </button>
                 </nav>
@@ -299,7 +364,7 @@ export default function ProviderDashboard() {
               <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
               <div className="flex items-center justify-between mb-6 relative z-10">
                 <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md border border-white/20 shadow-inner">
-                  <Package size={28} className="text-white" />
+                  <Package size={28} className="text-white cursor-pointer" />
                 </div>
                 <span className="bg-white/10 px-3 py-1 rounded-full text-white/80 text-xs font-bold uppercase tracking-wider backdrop-blur-sm">Inventory</span>
               </div>
@@ -311,7 +376,7 @@ export default function ProviderDashboard() {
               <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
               <div className="flex items-center justify-between mb-6 relative z-10">
                 <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md border border-white/20 shadow-inner">
-                  <Activity size={28} className="text-white" />
+                  <Activity size={28} className="text-white cursor-pointer" />
                 </div>
                 <span className="bg-white/10 px-3 py-1 rounded-full text-white/80 text-xs font-bold uppercase tracking-wider backdrop-blur-sm">Active</span>
               </div>
@@ -323,7 +388,7 @@ export default function ProviderDashboard() {
               <div className="absolute -right-4 -top-4 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700"></div>
               <div className="flex items-center justify-between mb-6 relative z-10">
                 <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md border border-white/20 shadow-inner">
-                  <TrendingUp size={28} className="text-white" />
+                  <TrendingUp size={28} className="text-white cursor-pointer" />
                 </div>
                 <span className="bg-white/10 px-3 py-1 rounded-full text-white/80 text-xs font-bold uppercase tracking-wider backdrop-blur-sm">Impact</span>
               </div>
@@ -336,7 +401,7 @@ export default function ProviderDashboard() {
           <div className="bg-white/40 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.05)] p-10 border border-white/40 hover:shadow-[0_8px_40px_rgba(0,0,0,0.08)] transition-all duration-500 mb-12">
             <div className="flex items-center gap-4 mb-10">
               <div className="w-12 h-12 bg-gradient-to-tr from-emerald-600 to-teal-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-600/20">
-                <Building2 size={24} />
+                <Building2 size={24} className="cursor-pointer" />
               </div>
               <div>
                 <h2 className="text-3xl font-black text-gray-900 tracking-tight">Facility Identity</h2>
@@ -353,6 +418,7 @@ export default function ProviderDashboard() {
                 { label: "Location", value: provider.location, icon: MapPin, color: "text-rose-600", bg: "bg-rose-50" },
                 { label: "Phone", value: provider.contactTelephone, icon: Phone, color: "text-indigo-600", bg: "bg-indigo-50" },
                 { label: "Email", value: provider.email, icon: Mail, color: "text-blue-500", bg: "bg-blue-50" },
+                { label: "MHP ID", value: provider.mhpNumber ? formatMHPNumber(provider.mhpNumber) : "Pending Migration", icon: IdCard, color: "text-purple-600", bg: "bg-purple-50" },
                 { label: "System Rank", value: "Verified Partner", icon: ShieldCheck, color: "text-emerald-500", bg: "bg-emerald-50" },
               ].map((item, index) => (
                 <div key={index} className="group p-6 rounded-3xl bg-white/50 backdrop-blur-sm border border-white/60 hover:border-blue-300 transition-all duration-500 hover:shadow-xl hover:shadow-blue-500/5">
@@ -373,7 +439,7 @@ export default function ProviderDashboard() {
           <div className="flex items-center justify-between mb-10">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-gradient-to-tr from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-purple-600/20">
-                <Package size={24} />
+                <Package size={24} className="cursor-pointer" />
               </div>
               <div>
                 <h2 className="text-3xl font-black text-gray-900 tracking-tight">Healthcare Inventory</h2>
@@ -382,13 +448,13 @@ export default function ProviderDashboard() {
             </div>
             <button
               onClick={() => setShowPackageForm(!showPackageForm)}
-              className={`px-8 py-3 rounded-2xl font-bold transition-all duration-300 flex items-center gap-2 shadow-lg border ${
+              className={`px-8 py-3 rounded-2xl font-bold transition-all duration-300 flex items-center gap-2 shadow-lg border cursor-pointer ${
                 showPackageForm 
                   ? "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200" 
                   : "bg-gradient-to-r from-emerald-500 to-teal-600 text-white border-emerald-400 hover:shadow-emerald-500/20 hover:scale-105 active:scale-95"
               }`}
             >
-              {showPackageForm ? <X size={20} /> : <Plus size={20} />}
+              {showPackageForm ? <X size={20} className="cursor-pointer" /> : <Plus size={20} className="cursor-pointer" />}
               {showPackageForm ? "Cancel" : "Create Package"}
             </button>
           </div>
@@ -397,7 +463,7 @@ export default function ProviderDashboard() {
             <form onSubmit={handlePackageSubmit} className="mb-12 p-10 rounded-[2rem] bg-white/60 backdrop-blur-md border border-emerald-200/50 shadow-xl shadow-emerald-500/5 animate-in fade-in zoom-in-95 duration-500">
               <div className="flex items-center gap-3 mb-8">
                 <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600">
-                  <Plus size={20} />
+                  <Plus size={20} className="cursor-pointer" />
                 </div>
                 <h3 className="text-2xl font-black text-gray-900">New Offering Details</h3>
               </div>
@@ -436,6 +502,45 @@ export default function ProviderDashboard() {
                     placeholder="e.g., 1 Year, 6 Months"
                   />
                 </div>
+
+                {/* Validity Date Range */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Valid From Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={packageForm.validFrom}
+                    onChange={(e) => setPackageForm({ ...packageForm, validFrom: e.target.value })}
+                    className="w-full px-6 py-4 bg-white/80 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all outline-none font-medium cursor-pointer"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Valid Until Date</label>
+                  <input
+                    type="date"
+                    required
+                    value={packageForm.validUntil}
+                    onChange={(e) => setPackageForm({ ...packageForm, validUntil: e.target.value })}
+                    min={packageForm.validFrom}
+                    className="w-full px-6 py-4 bg-white/80 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all outline-none font-medium cursor-pointer"
+                  />
+                </div>
+
+                {/* MHP ID */}
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">MHP ID (Provider ID)</label>
+                  <input
+                    type="text"
+                    required
+                    value={packageForm.mhpId}
+                    onChange={(e) => setPackageForm({ ...packageForm, mhpId: e.target.value })}
+                    className="w-full px-6 py-4 bg-white/80 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all outline-none font-mono font-bold placeholder:text-gray-300"
+                    placeholder="MHP1234567890"
+                    pattern="MHP\d{10}"
+                    title="Format: MHP followed by 10 digits"
+                  />
+                </div>
+
                 <div className="space-y-2 lg:col-span-1">
                   <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Market Price ({currency.symbol})</label>
                   <div className="relative">
@@ -451,6 +556,7 @@ export default function ProviderDashboard() {
                     />
                   </div>
                 </div>
+
                 <div className="md:col-span-2 lg:col-span-2 space-y-2">
                   <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Key Features & Inclusions</label>
                   <textarea
@@ -458,10 +564,24 @@ export default function ProviderDashboard() {
                     value={packageForm.description}
                     onChange={(e) => setPackageForm({ ...packageForm, description: e.target.value })}
                     className="w-full px-6 py-4 bg-white/80 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all outline-none font-medium resize-none placeholder:text-gray-300"
-                    rows={1}
+                    rows={2}
                     placeholder="Briefly list the primary benefits..."
                   />
                 </div>
+
+                {/* Terms and Conditions */}
+                <div className="md:col-span-2 lg:col-span-3 space-y-2">
+                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Terms & Conditions of Use</label>
+                  <textarea
+                    required
+                    value={packageForm.termsAndConditions}
+                    onChange={(e) => setPackageForm({ ...packageForm, termsAndConditions: e.target.value })}
+                    className="w-full px-6 py-4 bg-white/80 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-emerald-500/10 focus:border-emerald-500 transition-all outline-none font-medium resize-none placeholder:text-gray-300"
+                    rows={4}
+                    placeholder="Enter terms and conditions, usage restrictions, exclusions, etc..."
+                  />
+                </div>
+
                 <div className="md:col-span-2 lg:col-span-3">
                   <label className="flex items-center gap-4 cursor-pointer group w-fit">
                     <div className="relative">
@@ -481,7 +601,7 @@ export default function ProviderDashboard() {
               <div className="mt-10 flex justify-end">
                 <button
                   type="submit"
-                  className="px-12 py-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-2xl font-black shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:-translate-y-1 transition-all duration-300 active:scale-95"
+                  className="px-12 py-4 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-2xl font-black shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 hover:-translate-y-1 transition-all duration-300 active:scale-95 cursor-pointer"
                 >
                   Publish Package
                 </button>
@@ -552,6 +672,32 @@ export default function ProviderDashboard() {
                             </div>
                           </div>
 
+                          {pkg.validFrom && pkg.validUntil && (
+                            <div className="flex items-center gap-3 px-5 py-3 bg-white/80 rounded-2xl border border-gray-100 shadow-sm">
+                              <div className="w-8 h-8 rounded-xl bg-cyan-50 flex items-center justify-center text-cyan-600">
+                                <Calendar size={18} />
+                              </div>
+                              <div>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">Valid Dates</p>
+                                <p className="text-sm font-bold text-gray-900 leading-none">
+                                  {new Date(pkg.validFrom).toLocaleDateString()} - {new Date(pkg.validUntil).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          {pkg.mhpId && (
+                            <div className="flex items-center gap-3 px-5 py-3 bg-white/80 rounded-2xl border border-gray-100 shadow-sm">
+                              <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                                <IdCard size={18} />
+                              </div>
+                              <div>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest leading-none mb-1">MHP ID</p>
+                                <p className="text-sm font-bold text-gray-900 leading-none font-mono">{pkg.mhpId}</p>
+                              </div>
+                            </div>
+                          )}
+
                           {!pkg.isFree && (
                             <div className="flex items-center gap-3 px-5 py-3 bg-white/80 rounded-2xl border border-gray-100 shadow-sm">
                               <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
@@ -570,23 +716,23 @@ export default function ProviderDashboard() {
                       <div className="flex flex-row lg:flex-col gap-3 shrink-0">
                         <button
                           onClick={() => handleReview(pkg)}
-                          className="flex-1 lg:flex-none p-4 bg-white hover:bg-blue-600 text-blue-600 hover:text-white rounded-2xl font-bold transition-all duration-300 shadow-sm border border-blue-600/10 hover:border-blue-600 flex items-center justify-center gap-2 group/btn"
+                          className="flex-1 lg:flex-none p-4 bg-white hover:bg-blue-600 text-blue-600 hover:text-white rounded-2xl font-bold transition-all duration-300 shadow-sm border border-blue-600/10 hover:border-blue-600 flex items-center justify-center gap-2 group/btn cursor-pointer"
                         >
-                          <Eye size={20} className="group-hover/btn:scale-110 transition-transform" />
+                          <Eye size={20} className="group-hover/btn:scale-110 transition-transform cursor-pointer" />
                           <span className="hidden sm:inline">Details</span>
                         </button>
                         <button
                           onClick={() => handleUpdate(pkg)}
-                          className="flex-1 lg:flex-none p-4 bg-white hover:bg-purple-600 text-purple-600 hover:text-white rounded-2xl font-bold transition-all duration-300 shadow-sm border border-purple-600/10 hover:border-purple-600 flex items-center justify-center gap-2 group/btn"
+                          className="flex-1 lg:flex-none p-4 bg-white hover:bg-purple-600 text-purple-600 hover:text-white rounded-2xl font-bold transition-all duration-300 shadow-sm border border-purple-600/10 hover:border-purple-600 flex items-center justify-center gap-2 group/btn cursor-pointer"
                         >
-                          <Edit size={20} className="group-hover/btn:scale-110 transition-transform" />
+                          <Edit size={20} className="group-hover/btn:scale-110 transition-transform cursor-pointer" />
                           <span className="hidden sm:inline">Modify</span>
                         </button>
                         <button
                           onClick={() => handleDelete(pkg)}
-                          className="flex-1 lg:flex-none p-4 bg-white hover:bg-rose-600 text-rose-600 hover:text-white rounded-2xl font-bold transition-all duration-300 shadow-sm border border-rose-600/10 hover:border-rose-600 flex items-center justify-center gap-2 group/btn"
+                          className="flex-1 lg:flex-none p-4 bg-white hover:bg-rose-600 text-rose-600 hover:text-white rounded-2xl font-bold transition-all duration-300 shadow-sm border border-rose-600/10 hover:border-rose-600 flex items-center justify-center gap-2 group/btn cursor-pointer"
                         >
-                          <Trash2 size={20} className="group-hover/btn:scale-110 transition-transform" />
+                          <Trash2 size={20} className="group-hover/btn:scale-110 transition-transform cursor-pointer" />
                           <span className="hidden sm:inline">Remove</span>
                         </button>
                       </div>
@@ -608,7 +754,7 @@ export default function ProviderDashboard() {
               <div className="flex items-center justify-between mb-10">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-blue-600/10 rounded-2xl flex items-center justify-center text-blue-600">
-                    <Eye size={24} />
+                    <Eye size={24} className="cursor-pointer" />
                   </div>
                   <div>
                     <h2 className="text-3xl font-black text-gray-900 tracking-tight">Offering Intelligence</h2>
@@ -617,9 +763,9 @@ export default function ProviderDashboard() {
                 </div>
                 <button
                   onClick={() => setShowReviewModal(false)}
-                  className="w-10 h-10 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-full flex items-center justify-center transition-colors"
+                  className="w-10 h-10 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-full flex items-center justify-center transition-colors cursor-pointer"
                 >
-                  <X size={20} />
+                  <X size={20} className="cursor-pointer" />
                 </button>
               </div>
 
@@ -646,12 +792,48 @@ export default function ProviderDashboard() {
                   </div>
                 </div>
 
+                {/* Validity Date Range */}
+                {(selectedPackage.validFrom || selectedPackage.validUntil) && (
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {selectedPackage.validFrom && (
+                      <div className="p-6 bg-cyan-50/50 rounded-[2rem] border border-cyan-100">
+                        <p className="text-[10px] font-bold text-cyan-500 uppercase tracking-widest mb-2">Valid From</p>
+                        <p className="text-lg font-black text-gray-900">{new Date(selectedPackage.validFrom).toLocaleDateString()}</p>
+                      </div>
+                    )}
+                    {selectedPackage.validUntil && (
+                      <div className="p-6 bg-orange-50/50 rounded-[2rem] border border-orange-100">
+                        <p className="text-[10px] font-bold text-orange-500 uppercase tracking-widest mb-2">Valid Until</p>
+                        <p className="text-lg font-black text-gray-900">{new Date(selectedPackage.validUntil).toLocaleDateString()}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* MHP ID */}
+                {selectedPackage.mhpId && (
+                  <div className="p-6 bg-indigo-50/50 rounded-[2rem] border border-indigo-100">
+                    <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mb-2">Provider MHP ID</p>
+                    <p className="text-lg font-black text-gray-900 font-mono">{selectedPackage.mhpId}</p>
+                  </div>
+                )}
+
                 <div className="space-y-4">
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none">Defined Value & Benefits</p>
                   <div className="p-8 bg-gray-50/50 rounded-[2rem] border border-gray-100">
                     <p className="text-lg text-gray-600 font-medium leading-relaxed">{selectedPackage.description}</p>
                   </div>
                 </div>
+
+                {/* Terms and Conditions */}
+                {selectedPackage.termsAndConditions && (
+                  <div className="space-y-4">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest leading-none">Terms & Conditions</p>
+                    <div className="p-8 bg-amber-50/50 rounded-[2rem] border border-amber-100">
+                      <p className="text-base text-gray-600 font-medium leading-relaxed whitespace-pre-wrap">{selectedPackage.termsAndConditions}</p>
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex items-center gap-4">
                   <div className={`px-5 py-2 rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-2 ${
@@ -666,7 +848,7 @@ export default function ProviderDashboard() {
               <div className="mt-12">
                 <button
                   onClick={() => setShowReviewModal(false)}
-                  className="w-full py-5 bg-gray-900 text-white rounded-2xl font-black shadow-xl hover:bg-black hover:-translate-y-1 transition-all duration-300"
+                  className="w-full py-5 bg-gray-900 text-white rounded-2xl font-black shadow-xl hover:bg-black hover:-translate-y-1 transition-all duration-300 cursor-pointer"
                 >
                   Acknowledge & Close
                 </button>
@@ -685,7 +867,7 @@ export default function ProviderDashboard() {
               <div className="flex items-center justify-between mb-10">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-purple-600/10 rounded-2xl flex items-center justify-center text-purple-600">
-                    <Edit size={24} />
+                    <Edit size={24} className="cursor-pointer" />
                   </div>
                   <div>
                     <h2 className="text-3xl font-black text-gray-900 tracking-tight">Refine Offering</h2>
@@ -694,9 +876,9 @@ export default function ProviderDashboard() {
                 </div>
                 <button
                   onClick={() => setShowUpdateModal(false)}
-                  className="w-10 h-10 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-full flex items-center justify-center transition-colors"
+                  className="w-10 h-10 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-full flex items-center justify-center transition-colors cursor-pointer"
                 >
-                  <X size={20} />
+                  <X size={20} className="cursor-pointer" />
                 </button>
               </div>
 
@@ -732,6 +914,45 @@ export default function ProviderDashboard() {
                       className="w-full px-6 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 transition-all outline-none font-bold placeholder:text-gray-300"
                     />
                   </div>
+
+                  {/* Validity Date Range */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Valid From Date</label>
+                    <input
+                      type="date"
+                      required
+                      value={updateForm.validFrom}
+                      onChange={(e) => setUpdateForm({ ...updateForm, validFrom: e.target.value })}
+                      className="w-full px-6 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 transition-all outline-none font-medium cursor-pointer"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Valid Until Date</label>
+                    <input
+                      type="date"
+                      required
+                      value={updateForm.validUntil}
+                      onChange={(e) => setUpdateForm({ ...updateForm, validUntil: e.target.value })}
+                      min={updateForm.validFrom}
+                      className="w-full px-6 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 transition-all outline-none font-medium cursor-pointer"
+                    />
+                  </div>
+
+                  {/* MHP ID */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">MHP ID (Provider ID)</label>
+                    <input
+                      type="text"
+                      required
+                      value={updateForm.mhpId}
+                      onChange={(e) => setUpdateForm({ ...updateForm, mhpId: e.target.value })}
+                      className="w-full px-6 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 transition-all outline-none font-mono font-bold placeholder:text-gray-300"
+                      placeholder="MHP1234567890"
+                      pattern="MHP\d{10}"
+                      title="Format: MHP followed by 10 digits"
+                    />
+                  </div>
+
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Price ({currency.symbol})</label>
                     <div className="relative">
@@ -746,6 +967,7 @@ export default function ProviderDashboard() {
                       />
                     </div>
                   </div>
+
                   <div className="md:col-span-2 space-y-2">
                     <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Descriptor</label>
                     <textarea
@@ -755,6 +977,20 @@ export default function ProviderDashboard() {
                       className="w-full px-6 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 transition-all outline-none font-medium resize-none min-h-[120px]"
                     />
                   </div>
+
+                  {/* Terms and Conditions */}
+                  <div className="md:col-span-2 space-y-2">
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">Terms & Conditions of Use</label>
+                    <textarea
+                      required
+                      value={updateForm.termsAndConditions}
+                      onChange={(e) => setUpdateForm({ ...updateForm, termsAndConditions: e.target.value })}
+                      className="w-full px-6 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 transition-all outline-none font-medium resize-none placeholder:text-gray-300"
+                      rows={4}
+                      placeholder="Enter terms and conditions, usage restrictions, exclusions, etc..."
+                    />
+                  </div>
+
                   <div className="md:col-span-2">
                     <label className="flex items-center gap-4 cursor-pointer group w-fit">
                       <div className="relative">
@@ -776,13 +1012,13 @@ export default function ProviderDashboard() {
                   <button
                     type="button"
                     onClick={() => setShowUpdateModal(false)}
-                    className="flex-1 py-5 bg-gray-100 text-gray-700 rounded-2xl font-black hover:bg-gray-200 transition-all duration-300"
+                    className="flex-1 py-5 bg-gray-100 text-gray-700 rounded-2xl font-black hover:bg-gray-200 transition-all duration-300 cursor-pointer"
                   >
                     Discard Changes
                   </button>
                   <button
                     type="submit"
-                    className="flex-2 px-12 py-5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-2xl font-black shadow-xl shadow-purple-500/20 hover:shadow-purple-500/40 hover:-translate-y-1 transition-all duration-300"
+                    className="flex-2 px-12 py-5 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-2xl font-black shadow-xl shadow-purple-500/20 hover:shadow-purple-500/40 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
                   >
                     Commit Structural Updates
                   </button>
@@ -801,7 +1037,7 @@ export default function ProviderDashboard() {
             <div className="p-10">
               <div className="text-center mb-10">
                 <div className="w-20 h-20 bg-rose-100 rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-rose-600">
-                  <AlertTriangle size={40} />
+                  <AlertTriangle size={40} className="cursor-pointer" />
                 </div>
                 <h2 className="text-3xl font-black text-gray-900 mb-2 tracking-tight">Archive Offering?</h2>
                 <p className="text-gray-500 font-medium">This structural removal is irreversible and will delist this service immediately.</p>
@@ -815,13 +1051,13 @@ export default function ProviderDashboard() {
               <div className="grid gap-4">
                 <button
                   onClick={confirmDelete}
-                  className="w-full py-5 bg-rose-600 text-white rounded-2xl font-black shadow-xl shadow-rose-600/20 hover:bg-rose-700 hover:-translate-y-1 transition-all duration-300"
+                  className="w-full py-5 bg-rose-600 text-white rounded-2xl font-black shadow-xl shadow-rose-600/20 hover:bg-rose-700 hover:-translate-y-1 transition-all duration-300 cursor-pointer"
                 >
                   Confirm Deletion
                 </button>
                 <button
                   onClick={() => setShowDeleteModal(false)}
-                  className="w-full py-5 bg-gray-100 text-gray-700 rounded-2xl font-black hover:bg-gray-200 transition-all duration-300"
+                  className="w-full py-5 bg-gray-100 text-gray-700 rounded-2xl font-black hover:bg-gray-200 transition-all duration-300 cursor-pointer"
                 >
                   Cancel & Retain
                 </button>
@@ -829,6 +1065,25 @@ export default function ProviderDashboard() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Payment Settings Modal */}
+      {showPaymentSettings && (
+        <ProviderPaymentSettings
+          settings={{
+            flutterwaveEnabled: false,
+            flutterwavePublicKey: "",
+            flutterwaveSecretKey: "",
+            paystackEnabled: false,
+            paystackPublicKey: "",
+            paystackSecretKey: "",
+            mobileMoneyEnabled: false,
+            bankTransferEnabled: false,
+            defaultGateway: "flutterwave",
+          }}
+          onSave={handleSavePaymentSettings}
+          onClose={() => setShowPaymentSettings(false)}
+        />
       )}
       </div>
     </div>

@@ -54,19 +54,19 @@ export default function PatientLogin() {
       <div className="max-w-md w-full relative z-10">
         <div className="bg-white/90 backdrop-blur-3xl rounded-[3rem] shadow-[0_40px_80px_-20px_rgba(15,23,42,0.15)] p-10 sm:p-12 border border-white/50">
           <div className="text-center mb-10">
-            <Link href="/" className="inline-block mb-6 group transition-all duration-500 hover:scale-110">
+            <Link href="/" className="inline-block mb-6 group transition-all duration-500 hover:scale-110 cursor-pointer">
               <Image
                 src="/logo.png"
                 alt="MoreLife Healthcare"
                 width={180}
                 height={70}
-                className="object-contain mx-auto"
+                className="object-contain mx-auto cursor-pointer"
                 unoptimized
               />
             </Link>
             
             <div className="inline-flex items-center gap-2 bg-blue-100/50 px-4 py-1.5 rounded-full mb-4 border border-blue-200/50">
-              <UserCircle2 size={16} className="text-blue-600" />
+              <UserCircle2 size={16} className="text-blue-600 cursor-pointer" />
               <span className="text-blue-700 font-bold text-[10px] uppercase tracking-wider">Patient Portal</span>
             </div>
             
@@ -85,14 +85,14 @@ export default function PatientLogin() {
             <div className="space-y-2">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] pl-1">Personal Email</label>
               <div className="relative group">
-                <Mail className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={20} />
+                <Mail className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors cursor-pointer" size={20} />
                 <input
                   type="email"
                   required
                   placeholder="name@example.com"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full pl-16 pr-8 py-5 bg-white border-2 border-slate-100 rounded-3xl text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-bold shadow-sm"
+                  className="w-full pl-16 pr-8 py-5 bg-white border-2 border-slate-100 rounded-3xl text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-bold shadow-sm cursor-text"
                 />
               </div>
             </div>
@@ -100,17 +100,17 @@ export default function PatientLogin() {
             <div className="space-y-2">
               <div className="flex justify-between items-center px-1">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em]">Security Pass</label>
-                <Link href="/patient/forgot-password" className="text-[10px] font-black text-blue-600 uppercase tracking-wider hover:text-blue-700 transition-colors">Forgot?</Link>
+                <Link href="/patient/forgot-password" className="text-[10px] font-black text-blue-600 uppercase tracking-wider hover:text-blue-700 transition-colors cursor-pointer">Forgot?</Link>
               </div>
               <div className="relative group">
-                <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" size={20} />
+                <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors cursor-pointer" size={20} />
                 <input
                   type="password"
                   required
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full pl-16 pr-8 py-5 bg-white border-2 border-slate-100 rounded-3xl text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-bold shadow-sm"
+                  className="w-full pl-16 pr-8 py-5 bg-white border-2 border-slate-100 rounded-3xl text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-bold shadow-sm cursor-text"
                 />
               </div>
             </div>
@@ -118,7 +118,7 @@ export default function PatientLogin() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-[2rem] font-black shadow-xl shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-1 transition-all flex items-center justify-center gap-3 disabled:opacity-50 group"
+              className="w-full py-5 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-[2rem] font-black shadow-xl shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-1 transition-all flex items-center justify-center gap-3 disabled:opacity-50 group cursor-pointer"
             >
               {loading ? (
                 <div className="flex items-center gap-3">
@@ -128,7 +128,7 @@ export default function PatientLogin() {
               ) : (
                 <>
                   Enter Vault
-                  <ArrowRight size={22} className="group-hover:translate-x-2 transition-transform" />
+                  <ArrowRight size={22} className="group-hover:translate-x-2 transition-transform cursor-pointer" />
                 </>
               )}
             </button>
@@ -137,7 +137,7 @@ export default function PatientLogin() {
           <div className="mt-10 pt-10 border-t border-slate-100 text-center">
             <p className="text-slate-500 font-bold tracking-tight">
               New to the ecosystem?{" "}
-              <Link href="/patient/register" className="text-blue-600 hover:text-blue-700 font-black ml-1 transition-all border-b-2 border-blue-600/10 hover:border-blue-600">
+              <Link href="/patient/register" className="text-blue-600 hover:text-blue-700 font-black ml-1 transition-all border-b-2 border-blue-600/10 hover:border-blue-600 cursor-pointer">
                 Create Account
               </Link>
             </p>
@@ -145,7 +145,7 @@ export default function PatientLogin() {
         </div>
         
         <div className="mt-8 flex items-center justify-center gap-2 text-slate-400">
-          <ShieldCheck size={16} />
+          <ShieldCheck size={16} className="cursor-pointer" />
           <span className="text-xs font-bold uppercase tracking-[0.1em]">Secure Multi-Factor Authentication</span>
         </div>
       </div>
