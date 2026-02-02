@@ -1,40 +1,102 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --primary: #0066cc;
-  --primary-dark: #0052a3;
-  --primary-light: #3385d6;
-  --secondary: #00a86b;
-  --secondary-dark: #008555;
-  --accent: #f0f8ff;
-  --card-bg: #ffffff;
-  --border: #e5e7eb;
+  /* Modern Clean Medical Tech Palette */
+  --background: #f8fafc;
+  --foreground: #0f172a;
+
+  /* Primary - Vibrant Blue */
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --primary-dark: #1d4ed8;
+  --primary-light: #60a5fa;
+
+  /* Secondary - Reassuring Emerald */
+  --secondary: #10b981;
+  --secondary-foreground: #ffffff;
+  --secondary-dark: #059669;
+  --secondary-light: #34d399;
+
+  /* Accent - Soft Lavender/Blue */
+  --accent: #eef2ff;
+  --accent-foreground: #4338ca;
+
+  /* Surface colors for glassmorphism */
+  --card-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.5);
+
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #2563eb;
+
+  --radius: 1rem;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
   --color-primary-dark: var(--primary-dark);
   --color-primary-light: var(--primary-light);
   --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary-dark: var(--secondary-dark);
   --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
   --color-card-bg: var(--card-bg);
   --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-xl: var(--radius);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Custom Animations */
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-blob: blob 7s infinite;
+
+  @keyframes float {
+    0% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-20px);
+    }
+    100% {
+      transform: translateY(0px);
+    }
+  }
+
+  @keyframes blob {
+    0% {
+      transform: translate(0px, 0px) scale(1);
+    }
+    33% {
+      transform: translate(30px, -50px) scale(1.1);
+    }
+    66% {
+      transform: translate(-20px, 20px) scale(0.9);
+    }
+    100% {
+      transform: translate(0px, 0px) scale(1);
+    }
+  }
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --accent: #1a1a2e;
-    --card-bg: #1a1a1a;
-    --border: #333333;
+    --background: #0f172a;
+    --foreground: #f8fafc;
+    --primary: #3b82f6;
+    --primary-foreground: #ffffff;
+    --secondary: #34d399;
+    --accent: #1e293b;
+    --card-bg: rgba(30, 41, 59, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --border: #334155;
+    --input: #334155;
   }
 }
 
@@ -42,28 +104,45 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
 }
 
-.bg-primary {
-  background-color: var(--primary);
+/* Glassmorphism Utility */
+.glass {
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
 }
 
-.bg-primary-dark {
-  background-color: var(--primary-dark);
+.glass-hover {
+  transition: all 0.3s ease;
 }
 
-.bg-secondary {
-  background-color: var(--secondary);
+.glass-hover:hover {
+  background: rgba(255, 255, 255, 0.85);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
 }
 
-.text-primary {
-  color: var(--primary);
+.dark .glass-hover:hover {
+  background: rgba(30, 41, 59, 0.9);
 }
 
-.text-secondary {
-  color: var(--secondary);
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
 }
 
-.border-primary {
-  border-color: var(--primary);
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--secondary);
 }
