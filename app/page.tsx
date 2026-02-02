@@ -164,7 +164,7 @@ export default function Home() {
               </h1>
               
               <p className="text-base sm:text-lg text-slate-600 font-medium max-w-xl mx-auto leading-relaxed">
-                Whether you&apos;re seeking care or providing it, we have a tailored experience for you.
+                The Healthcare Ecosystem Tailored for Africa
               </p>
 
               {/* Trust Indicators */}
