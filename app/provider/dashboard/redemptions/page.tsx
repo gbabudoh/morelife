@@ -73,7 +73,7 @@ export default function RedemptionsPage() {
       try {
         const providerId = localStorage.getItem('providerId');
         if (!providerId) {
-          router.push('/provider/login');
+          router.replace('/provider/login');
           return;
         }
 
@@ -176,7 +176,7 @@ export default function RedemptionsPage() {
               Service <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">Verification</span>
             </h1>
             <p className="text-xl text-gray-500 font-medium max-w-2xl leading-relaxed">
-              Confirm patient eligibility and redeem healthcare packages through secure multi-channel verification.
+              Confirm patient eligibility and redeem healthcare packages or NGO Access Codes through secure multi-channel verification.
             </p>
           </div>
 
@@ -237,7 +237,7 @@ export default function RedemptionsPage() {
                           type="text"
                           placeholder="Paste secure QR payload..."
                           className="flex-1 px-6 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-bold"
-                          onKeyPress={(e) => e.key === "Enter" && handleQRScan(e.currentTarget.value)}
+                          onKeyDown={(e) => e.key === "Enter" && handleQRScan(e.currentTarget.value)}
                         />
                         <button 
                           onClick={() => handleQRScan("MANUAL_TRIGGER")}
@@ -268,7 +268,7 @@ export default function RedemptionsPage() {
                         type="text"
                         value={mhNumber}
                         onChange={(e) => setMhNumber(e.target.value)}
-                        onKeyPress={(e) => e.key === "Enter" && handleMHLookup()}
+                        onKeyDown={(e) => e.key === "Enter" && handleMHLookup()}
                         placeholder="MH-2025-000000"
                         className="w-full px-8 py-6 bg-white border-2 border-gray-100 rounded-[2rem] focus:ring-8 focus:ring-purple-500/5 focus:border-purple-500 transition-all outline-none text-2xl font-black placeholder:text-gray-200"
                       />
@@ -299,7 +299,7 @@ export default function RedemptionsPage() {
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        onKeyPress={(e) => e.key === "Enter" && handleSearch()}
+                        onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                         placeholder="Search directories..."
                         className="flex-1 px-8 py-5 bg-white border border-gray-200 rounded-[2rem] focus:ring-4 focus:ring-teal-500/10 focus:border-teal-500 transition-all outline-none font-bold"
                       />
@@ -374,7 +374,7 @@ export default function RedemptionsPage() {
                             className="px-8 py-5 bg-gray-900 text-white rounded-2xl font-black shadow-xl shadow-gray-900/10 hover:bg-black hover:-translate-y-1 transition-all flex items-center justify-center gap-3"
                           >
                             <CheckCircle2 size={20} />
-                            Verify Treatment
+                            {purchase.price === 0 ? "Verify Access Code" : "Verify Treatment"}
                           </button>
                         </div>
                       </div>

@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@ionic/react": "^8.7.17",
+    "@livekit/components-react": "^2.9.20",
+    "@livekit/components-styles": "^1.2.0",
     "@prisma/adapter-pg": "^7.2.0",
     "@prisma/client": "^7.2.0",
     "@prisma/config": "^7.2.0",
@@ -23,8 +25,11 @@
     "flutterwave-node-v3": "^1.3.0",
     "flutterwave-react-native": "^1.0.4",
     "helmet": "^8.1.0",
+    "jose": "^6.2.2",
     "jsonwebtoken": "^9.0.3",
     "konsta": "^5.0.6",
+    "livekit-client": "^2.18.6",
+    "livekit-server-sdk": "^2.15.1",
     "lodash": "^4.17.21",
     "lucide-react": "^0.562.0",
     "mobileui": "^2.0.4",
@@ -49,6 +54,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

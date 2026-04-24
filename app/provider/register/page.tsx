@@ -1,22 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { 
-  Building2, 
-  User, 
-  Mail, 
-  Lock, 
-  MapPin, 
-  Phone, 
-  Upload, 
-  ShieldCheck, 
-  Check, 
-  ArrowRight, 
-  ArrowLeft, 
-  History, 
+import {
+  Building2,
+  User,
+  Users,
+  Mail,
+  Lock,
+  MapPin,
+  Phone,
+  Upload,
+  ShieldCheck,
+  Check,
+  ArrowRight,
+  ArrowLeft,
+  History,
   FileText,
   Briefcase,
   FlaskConical,
@@ -29,6 +30,13 @@ import { africanCountryCodes } from "@/lib/african-country-codes";
 
 export default function ProviderRegister() {
   const router = useRouter();
+
+  useEffect(() => {
+    if (localStorage.getItem("providerId")) {
+      router.replace("/provider/dashboard");
+    }
+  }, [router]);
+
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 4;
 
@@ -757,6 +765,25 @@ export default function ProviderRegister() {
             
             <h2 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tighter mb-4">Partner with MoreLife</h2>
             <p className="text-slate-500 font-bold text-lg max-w-xl mx-auto">Join Africa&apos;s most advanced healthcare ecosystem. Onboarding takes less than 5 minutes.</p>
+
+            {/* Role Toggle */}
+            <div className="flex bg-slate-100 rounded-2xl p-1 mt-8 max-w-xs mx-auto">
+              <button
+                type="button"
+                onClick={() => router.push("/patient/register")}
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-black transition-all duration-300 cursor-pointer text-slate-500 hover:text-slate-700"
+              >
+                <Users size={15} />
+                Patient
+              </button>
+              <button
+                type="button"
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-black transition-all duration-300 cursor-pointer bg-white text-emerald-600 shadow-md"
+              >
+                <Building2 size={15} />
+                Provider
+              </button>
+            </div>
           </div>
 
           {renderStepIndicator()}

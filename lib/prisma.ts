@@ -1,10 +1,19 @@
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import pg from "pg";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const connectionString = `${process.env.DATABASE_URL}`;
+console.log('Prisma initializing with URL:', connectionString.replace(/:[^:@/]+@/, ':****@'));
 
-const pool = new pg.Pool({ connectionString });
+const pool = new pg.Pool({ 
+  connectionString,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
 const adapter = new PrismaPg(pool);
 
 declare global {

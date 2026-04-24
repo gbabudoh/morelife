@@ -23,14 +23,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
     }
 
-    // In production, generate JWT token here
     return NextResponse.json(
       { message: "Login successful", patientId: patient.id },
       { status: 200 }
     );
-  } catch (error) {
-    console.error("Login error:", error);
-    return NextResponse.json({ error: "Login failed" }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Login error:", message);
+    return NextResponse.json({ 
+      error: "Login failed", 
+      details: message 
+    }, { status: 500 });
   }
 }
-

@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import ProviderPaymentSettings from "@/components/ProviderPaymentSettings";
+import StaffManagement, { Doctor } from "@/components/StaffManagement";
 import { formatMHPNumber } from "@/lib/mhp-generator";
 import { 
   Building2, 
@@ -18,6 +19,7 @@ import {
   QrCode,
   Plus,
   LogOut,
+  Home,
   Calendar,
   Stethoscope,
   Tag,
@@ -26,6 +28,11 @@ import {
   TrendingUp,
   Activity,
   ShieldCheck,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  FileCheck,
+  ShieldAlert,
   X,
   Eye,
   Edit,
@@ -46,7 +53,28 @@ interface ProviderData {
   mhpNumber: string;
   isActive: boolean;
   isRevoked: boolean;
+  verificationStatus: string;
+  
+  // Document existence
+  businessRegistrationDoc?: string;
+  medicalLicenseDoc?: string;
+  fireSafetyCert?: string;
+  liabilityInsurance?: string;
+  professionalLicenseDocs?: string;
+  taxIdNumber?: string;
+  proofOfAddressDoc?: string;
+  directorIdDoc?: string;
+  accreditationCert?: string;
+  goodStandingCert?: string;
+  dataProtectionRegDoc?: string;
+  
+  // Expiry Dates
+  medicalLicenseExpiry?: string;
+  fireSafetyExpiry?: string;
+  liabilityInsuranceExpiry?: string;
+  professionalLicenseExpiry?: string;
 }
+
 
 interface HealthcarePackage {
   id: string;
@@ -61,6 +89,9 @@ interface HealthcarePackage {
   validUntil?: string;
   termsAndConditions?: string;
   mhpId?: string;
+  isVideoConsultation?: boolean;
+  sessionCount?: number;
+  validityDays?: number;
 }
 
 export default function ProviderDashboard() {
@@ -80,6 +111,9 @@ export default function ProviderDashboard() {
     validUntil: "",
     termsAndConditions: "",
     mhpId: "",
+    isVideoConsultation: false,
+    sessionCount: "1",
+    validityDays: "180",
   });
 
   // Modal states
@@ -87,6 +121,8 @@ export default function ProviderDashboard() {
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showPaymentSettings, setShowPaymentSettings] = useState(false);
+  const [showStaffManagement, setShowStaffManagement] = useState(false);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [selectedPackage, setSelectedPackage] = useState<HealthcarePackage | null>(null);
   const [updateForm, setUpdateForm] = useState({
     name: "",
@@ -99,14 +135,30 @@ export default function ProviderDashboard() {
     validUntil: "",
     termsAndConditions: "",
     mhpId: "",
+    isVideoConsultation: false,
+    sessionCount: "1",
+    validityDays: "180",
   });
+
+  const getDocStatus = (doc?: string, expiry?: string) => {
+    if (!doc) return { label: "Action Required", color: "text-red-500", bg: "bg-red-50", icon: ShieldAlert };
+    if (expiry) {
+      const expiryDate = new Date(expiry);
+      const today = new Date();
+      const diff = expiryDate.getTime() - today.getTime();
+      const days = Math.ceil(diff / (1000 * 3600 * 24));
+      if (days < 0) return { label: "Expired", color: "text-red-600", bg: "bg-red-100", icon: AlertCircle };
+      if (days < 30) return { label: "Expiring Soon", color: "text-amber-600", bg: "bg-amber-50", icon: Clock };
+    }
+    return { label: "Verified", color: "text-emerald-500", bg: "bg-emerald-50", icon: CheckCircle2 };
+  };
 
   useEffect(() => {
     const fetchProviderProfile = async () => {
       try {
         const providerId = localStorage.getItem('providerId');
         if (!providerId) {
-          router.push('/provider/login');
+          router.replace('/provider/login');
           return;
         }
 
@@ -116,10 +168,11 @@ export default function ProviderDashboard() {
         if (response.ok) {
           setProvider(data.provider);
           setPackages(data.packages);
+          setDoctors(data.doctors || []);
         } else {
           console.error("Failed to fetch profile:", data.error);
           if (response.status === 401 || response.status === 404) {
-            router.push('/provider/login');
+            router.replace('/provider/login');
           }
         }
       } catch (error) {
@@ -134,34 +187,41 @@ export default function ProviderDashboard() {
 
   const handlePackageSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newPackage: HealthcarePackage = {
-      id: Date.now().toString(),
-      name: packageForm.name,
-      description: packageForm.description,
-      price: parseFloat(packageForm.price) || 0,
-      duration: packageForm.duration,
-      treatmentType: packageForm.treatmentType,
-      isFree: packageForm.isFree,
-      isActive: true,
-      validFrom: packageForm.validFrom,
-      validUntil: packageForm.validUntil,
-      termsAndConditions: packageForm.termsAndConditions,
-      mhpId: packageForm.mhpId,
-    };
-    setPackages([...packages, newPackage]);
-    setPackageForm({
-      name: "",
-      description: "",
-      price: "",
-      duration: "",
-      treatmentType: "",
-      isFree: false,
-      validFrom: "",
-      validUntil: "",
-      termsAndConditions: "",
-      mhpId: "",
-    });
-    setShowPackageForm(false);
+    const providerId = localStorage.getItem('providerId');
+    if (!providerId) return;
+
+    try {
+      const response = await fetch("/api/provider/packages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...packageForm, providerId }),
+      });
+
+      if (response.ok) {
+        const newPkg = await response.json();
+        setPackages([newPkg, ...packages]);
+        setPackageForm({
+          name: "",
+          description: "",
+          price: "",
+          duration: "",
+          treatmentType: "",
+          isFree: false,
+          validFrom: "",
+          validUntil: "",
+          termsAndConditions: "",
+          mhpId: "",
+          isVideoConsultation: false,
+          sessionCount: "1",
+          validityDays: "180",
+        });
+        setShowPackageForm(false);
+      } else {
+        alert("Failed to create package");
+      }
+    } catch (error) {
+      console.error("Error creating package:", error);
+    }
   };
 
   const handleReview = (pkg: HealthcarePackage) => {
@@ -182,34 +242,57 @@ export default function ProviderDashboard() {
       validUntil: pkg.validUntil || "",
       termsAndConditions: pkg.termsAndConditions || "",
       mhpId: pkg.mhpId || "",
+      isVideoConsultation: pkg.isVideoConsultation || false,
+      sessionCount: (pkg.sessionCount || 1).toString(),
+      validityDays: (pkg.validityDays || 180).toString(),
     });
     setShowUpdateModal(true);
   };
 
-  const handleUpdateSubmit = (e: React.FormEvent) => {
+  const handleUpdateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPackage) return;
     
-    const updatedPackages = packages.map(pkg =>
-      pkg.id === selectedPackage.id
-        ? {
-            ...pkg,
-            name: updateForm.name,
-            description: updateForm.description,
-            price: parseFloat(updateForm.price) || 0,
-            duration: updateForm.duration,
-            treatmentType: updateForm.treatmentType,
-            isFree: updateForm.isFree,
-            validFrom: updateForm.validFrom,
-            validUntil: updateForm.validUntil,
-            termsAndConditions: updateForm.termsAndConditions,
-            mhpId: updateForm.mhpId,
-          }
-        : pkg
-    );
-    setPackages(updatedPackages);
-    setShowUpdateModal(false);
-    setSelectedPackage(null);
+    try {
+      const response = await fetch("/api/provider/packages", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...updateForm, id: selectedPackage.id }),
+      });
+
+      if (response.ok) {
+        const updatedPkg = await response.json();
+        setPackages(packages.map(pkg => pkg.id === selectedPackage.id ? updatedPkg : pkg));
+        setShowUpdateModal(false);
+        setSelectedPackage(null);
+      } else {
+        alert("Failed to update package");
+      }
+    } catch (error) {
+      console.error("Error updating package:", error);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedPackage) return;
+    setLoading(true);
+    try {
+      const response = await fetch(`/api/provider/packages?id=${selectedPackage.id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        setPackages(packages.filter(pkg => pkg.id !== selectedPackage.id));
+        setShowDeleteModal(false);
+        setSelectedPackage(null);
+      } else {
+        alert("Failed to delete package");
+      }
+    } catch (error) {
+      console.error("Error deleting package:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDelete = (pkg: HealthcarePackage) => {
@@ -217,19 +300,26 @@ export default function ProviderDashboard() {
     setShowDeleteModal(true);
   };
 
-  const confirmDelete = () => {
-    if (!selectedPackage) return;
-    setPackages(packages.filter(p => p.id !== selectedPackage.id));
-    setShowDeleteModal(false);
-    setSelectedPackage(null);
-  };
-
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/logout", { method: "POST" });
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
     localStorage.removeItem('providerId');
-    router.push('/provider/login');
+    router.replace('/provider/login');
   };
 
-  const handleSavePaymentSettings = async (settings: any) => {
+  const handleSavePaymentSettings = async (settings: {
+    flutterwaveEnabled?: boolean;
+    flutterwavePublicKey?: string;
+    flutterwaveSecretKey?: string;
+    flutterwaveAccountId?: string;
+    paystackEnabled?: boolean;
+    paystackPublicKey?: string;
+    paystackSecretKey?: string;
+    paystackAccountId?: string;
+  }) => {
     try {
       const providerId = localStorage.getItem('providerId');
       const response = await fetch('/api/provider/payment-settings', {
@@ -291,15 +381,16 @@ export default function ProviderDashboard() {
         <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/40 border-b border-white/40 shadow-[0_4px_30px_rgba(0,0,0,0.03)] transition-all duration-300">
           <div className="container mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
-              <Link href="/" className="flex items-center group cursor-pointer">
+              <div className="flex items-center">
                 <Image
                   src="/logo.png"
                   alt="MoreLife Healthcare"
                   width={160}
                   height={64}
-                  className="object-contain transition-all duration-500 group-hover:scale-105 group-hover:drop-shadow-lg cursor-pointer"
+                  className="object-contain"
+                  unoptimized
                 />
-              </Link>
+              </div>
               <div className="flex items-center gap-6">
                 <div className="hidden lg:flex flex-col items-end">
                   <span className="text-xl font-black text-gray-900 tracking-tight">{provider.providerName}</span>
@@ -319,6 +410,20 @@ export default function ProviderDashboard() {
                   >
                     <QrCode size={18} className="cursor-pointer" />
                     <span className="hidden sm:inline">Redemptions</span>
+                  </Link>
+                  <button
+                    onClick={() => setShowStaffManagement(true)}
+                    className="px-6 py-2.5 bg-purple-600/10 text-purple-600 hover:bg-purple-600 hover:text-white font-bold rounded-2xl transition-all duration-300 flex items-center gap-2 border border-purple-600/10 hover:border-purple-600 hover:shadow-lg hover:shadow-purple-600/20 cursor-pointer"
+                  >
+                    <User size={18} className="cursor-pointer" />
+                    <span className="hidden sm:inline">Staff</span>
+                  </button>
+                  <Link
+                    href="/"
+                    className="px-6 py-2.5 bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 font-bold rounded-2xl transition-all duration-300 flex items-center gap-2 cursor-pointer"
+                  >
+                    <Home size={18} />
+                    <span className="hidden sm:inline">Home</span>
                   </Link>
                   <button
                     onClick={handleLogout}
@@ -397,7 +502,86 @@ export default function ProviderDashboard() {
             </div>
           </div>
 
-          {/* Provider Information Card - Premium Glass */}
+          {/* Verification & Compliance - New Tiered System */}
+          <div className="bg-white/40 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.05)] p-10 border border-white/40 hover:shadow-[0_8px_40px_rgba(0,0,0,0.08)] transition-all duration-500 mb-12">
+            <div className="flex items-center justify-between mb-10">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-600/20">
+                  <ShieldCheck size={24} className="cursor-pointer" />
+                </div>
+                <div>
+                  <h2 className="text-3xl font-black text-gray-900 tracking-tight">Compliance & Verification</h2>
+                  <p className="text-gray-500 font-medium">Pan-African Regulatory Documentation Status</p>
+                </div>
+              </div>
+              <div className={`px-6 py-2 rounded-2xl font-black text-sm flex items-center gap-2 border ${
+                provider.verificationStatus === 'APPROVED' 
+                  ? "bg-emerald-50 text-emerald-600 border-emerald-100" 
+                  : "bg-amber-50 text-amber-600 border-amber-100"
+              }`}>
+                {provider.verificationStatus === 'APPROVED' ? <CheckCircle2 size={16} /> : <Clock size={16} />}
+                {provider.verificationStatus}
+              </div>
+            </div>
+
+            <div className="grid lg:grid-cols-2 gap-8">
+              {[
+                {
+                  title: "1. Core Business Verification",
+                  docs: [
+                    { name: "Certificate of Incorporation", status: getDocStatus(provider.businessRegistrationDoc) },
+                    { name: "Tax Identification (TIN)", status: getDocStatus(provider.taxIdNumber) },
+                    { name: "Proof of Business Address", status: getDocStatus(provider.proofOfAddressDoc) },
+                    { name: "Director Identification", status: getDocStatus(provider.directorIdDoc) },
+                  ]
+                },
+                {
+                  title: "2. Facility Operational Licensing",
+                  docs: [
+                    { name: "Annual Operating License", status: getDocStatus(provider.medicalLicenseDoc, provider.medicalLicenseExpiry) },
+                    { name: "Accreditation Certificate", status: getDocStatus(provider.accreditationCert) },
+                    { name: "Health & Safety Permits", status: getDocStatus(provider.fireSafetyCert, provider.fireSafetyExpiry) },
+                  ]
+                },
+                {
+                  title: "3. Professional Practitioner Verification",
+                  docs: [
+                    { name: "Practicing Licenses", status: getDocStatus(provider.professionalLicenseDocs, provider.professionalLicenseExpiry) },
+                    { name: "Certificate of Good Standing", status: getDocStatus(provider.goodStandingCert) },
+                    { name: "Indemnity Insurance", status: getDocStatus(provider.liabilityInsurance, provider.liabilityInsuranceExpiry) },
+                  ]
+                },
+                {
+                  title: "4. Digital Service Requirements",
+                  docs: [
+                    { name: "Data Protection Registration", status: getDocStatus(provider.dataProtectionRegDoc) },
+                  ]
+                }
+              ].map((category, idx) => (
+                <div key={idx} className="p-8 rounded-4xl bg-white/50 border border-white/60 space-y-6">
+                  <h3 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">{category.title}</h3>
+                  <div className="space-y-4">
+                    {category.docs.map((doc, dIdx) => (
+                      <div key={dIdx} className="flex items-center justify-between p-4 rounded-2xl bg-white/80 border border-slate-100 shadow-sm group hover:border-blue-200 transition-all">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${doc.status.bg}`}>
+                            <FileCheck size={18} className={doc.status.color} />
+                          </div>
+                          <span className="font-bold text-slate-700 text-sm">{doc.name}</span>
+                        </div>
+                        <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${doc.status.bg} ${doc.status.color}`}>
+                          <doc.status.icon size={12} />
+                          {doc.status.label}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Facility Identity Section */}
           <div className="bg-white/40 backdrop-blur-xl rounded-[2.5rem] shadow-[0_8px_32px_rgba(0,0,0,0.05)] p-10 border border-white/40 hover:shadow-[0_8px_40px_rgba(0,0,0,0.08)] transition-all duration-500 mb-12">
             <div className="flex items-center gap-4 mb-10">
               <div className="w-12 h-12 bg-gradient-to-tr from-emerald-600 to-teal-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-emerald-600/20">
@@ -580,6 +764,51 @@ export default function ProviderDashboard() {
                     rows={4}
                     placeholder="Enter terms and conditions, usage restrictions, exclusions, etc..."
                   />
+                </div>
+
+                <div className="md:col-span-2 lg:col-span-3 grid md:grid-cols-3 gap-8 p-8 rounded-[2rem] bg-slate-50 border border-slate-100 mb-4">
+                  <div className="space-y-4">
+                    <label className="flex items-center gap-4 cursor-pointer group w-fit">
+                      <div className="relative">
+                        <input
+                          type="checkbox"
+                          checked={packageForm.isVideoConsultation}
+                          onChange={(e) => setPackageForm({ ...packageForm, isVideoConsultation: e.target.checked })}
+                          className="peer hidden"
+                        />
+                        <div className="w-14 h-8 bg-gray-200 rounded-full peer-checked:bg-blue-500 transition-colors duration-300 shadow-inner"></div>
+                        <div className="absolute left-1 top-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-300 peer-checked:translate-x-6"></div>
+                      </div>
+                      <span className="text-sm font-black text-slate-700 group-hover:text-blue-600 transition-colors uppercase tracking-widest">Video Consultation</span>
+                    </label>
+                  </div>
+
+                  {packageForm.isVideoConsultation && (
+                    <>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Sessions Count</label>
+                        <input
+                          type="number"
+                          min="1"
+                          required
+                          value={packageForm.sessionCount}
+                          onChange={(e) => setPackageForm({ ...packageForm, sessionCount: e.target.value })}
+                          className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-black"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Validity (Days)</label>
+                        <input
+                          type="number"
+                          min="1"
+                          required
+                          value={packageForm.validityDays}
+                          onChange={(e) => setPackageForm({ ...packageForm, validityDays: e.target.value })}
+                          className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-black"
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div className="md:col-span-2 lg:col-span-3">
@@ -938,6 +1167,52 @@ export default function ProviderDashboard() {
                     />
                   </div>
 
+                  {/* Video Consultation Settings in Update Modal */}
+                  <div className="md:col-span-2 grid md:grid-cols-3 gap-8 p-8 rounded-[2rem] bg-purple-50/50 border border-purple-100 mb-4">
+                    <div className="space-y-4">
+                      <label className="flex items-center gap-4 cursor-pointer group w-fit">
+                        <div className="relative">
+                          <input
+                            type="checkbox"
+                            checked={updateForm.isVideoConsultation}
+                            onChange={(e) => setUpdateForm({ ...updateForm, isVideoConsultation: e.target.checked })}
+                            className="peer hidden"
+                          />
+                          <div className="w-14 h-8 bg-gray-200 rounded-full peer-checked:bg-purple-500 transition-colors duration-300 shadow-inner"></div>
+                          <div className="absolute left-1 top-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-300 peer-checked:translate-x-6"></div>
+                        </div>
+                        <span className="text-sm font-black text-slate-700 group-hover:text-purple-600 transition-colors uppercase tracking-widest">Video Consult</span>
+                      </label>
+                    </div>
+
+                    {updateForm.isVideoConsultation && (
+                      <>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-purple-400 uppercase tracking-widest pl-1">Sessions</label>
+                          <input
+                            type="number"
+                            min="1"
+                            required
+                            value={updateForm.sessionCount}
+                            onChange={(e) => setUpdateForm({ ...updateForm, sessionCount: e.target.value })}
+                            className="w-full px-5 py-3 bg-white border border-purple-200 rounded-xl focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 transition-all outline-none font-black"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black text-purple-400 uppercase tracking-widest pl-1">Validity (Days)</label>
+                          <input
+                            type="number"
+                            min="1"
+                            required
+                            value={updateForm.validityDays}
+                            onChange={(e) => setUpdateForm({ ...updateForm, validityDays: e.target.value })}
+                            className="w-full px-5 py-3 bg-white border border-purple-200 rounded-xl focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 transition-all outline-none font-black"
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
+
                   {/* MHP ID */}
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">MHP ID (Provider ID)</label>
@@ -1085,6 +1360,24 @@ export default function ProviderDashboard() {
           onClose={() => setShowPaymentSettings(false)}
         />
       )}
+        {showStaffManagement && provider && (
+          <StaffManagement
+            doctors={doctors}
+            providerId={provider.id}
+            onClose={() => setShowStaffManagement(false)}
+            onRefresh={() => {
+              // Trigger a re-fetch of provider data to get updated doctor list
+              const providerId = localStorage.getItem('providerId');
+              if (providerId) {
+                fetch(`/api/provider/profile?providerId=${providerId}`)
+                  .then(res => res.json())
+                  .then(data => {
+                    if (data.doctors) setDoctors(data.doctors);
+                  });
+              }
+            }}
+          />
+        )}
       </div>
     </div>
   );

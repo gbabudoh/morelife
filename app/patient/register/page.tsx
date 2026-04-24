@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -22,7 +22,6 @@ import {
   Briefcase,
   ChevronRight,
   Plus,
-  Minus,
   X,
   Upload,
   FileText,
@@ -31,7 +30,7 @@ import {
 
 // Subscription pricing in NGN (base currency)
 const SUBSCRIPTION_PRICES = {
-  SINGLE: 2000,
+  SINGLE: 1000,
   FAMILY: 10000,
   CORPORATE: 100000,
 };
@@ -48,6 +47,13 @@ const CURRENCY_RATES: Record<string, number> = {
 
 export default function PatientRegister() {
   const router = useRouter();
+
+  useEffect(() => {
+    if (localStorage.getItem("patientId")) {
+      router.replace("/patient/dashboard");
+    }
+  }, [router]);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 3;
@@ -77,6 +83,21 @@ export default function PatientRegister() {
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const getPasswordStrength = (password: string) => {
+    if (!password) return { level: 0, label: "", color: "" };
+    let score = 0;
+    if (password.length >= 6) score++;
+    if (password.length >= 10) score++;
+    if (/[A-Z]/.test(password)) score++;
+    if (/[0-9]/.test(password)) score++;
+    if (/[^A-Za-z0-9]/.test(password)) score++;
+    if (score <= 2) return { level: 1, label: "Weak", color: "bg-red-400", text: "text-red-400" };
+    if (score <= 3) return { level: 2, label: "Fair", color: "bg-yellow-400", text: "text-yellow-500" };
+    return { level: 3, label: "Strong", color: "bg-emerald-500", text: "text-emerald-500" };
+  };
+
+  const passwordStrength = getPasswordStrength(formData.password);
 
   // Get currency based on selected country
   const currency = formData.country ? getCurrencyByCountry(formData.country) : { symbol: "₦", code: "NGN", name: "Nigerian Naira" };
@@ -346,23 +367,51 @@ export default function PatientRegister() {
             </Link>
             <h2 className="text-4xl font-black text-slate-900 tracking-tight mb-2">Create Account</h2>
             <p className="text-slate-500 font-medium tracking-wide uppercase text-[10px]">Start your medical journey with us</p>
+
+            {/* Role Toggle */}
+            <div className="flex bg-slate-100 rounded-2xl p-1 mt-8 max-w-xs mx-auto">
+              <button
+                type="button"
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-black transition-all duration-300 cursor-pointer bg-white text-blue-600 shadow-md"
+              >
+                <Users size={15} />
+                Patient
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push("/provider/register")}
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-black transition-all duration-300 cursor-pointer text-slate-500 hover:text-slate-700"
+              >
+                <Building2 size={15} />
+                Provider
+              </button>
+            </div>
           </div>
 
           {/* Progress Indicator */}
           <div className="flex items-center justify-between mb-12 px-2 sm:px-6">
-            {[1, 2, 3].map((step) => (
+            {([
+              { step: 1, label: "Identity" },
+              { step: 2, label: "Location" },
+              { step: 3, label: "Plan" },
+            ] as const).map(({ step, label }) => (
               <div key={step} className="flex items-center flex-1 last:flex-none">
-                <div className={`w-14 h-14 rounded-[1.25rem] flex items-center justify-center transition-all duration-500 border-2 ${
-                  step === currentStep 
-                    ? "bg-blue-600 border-blue-400 shadow-[0_15px_30px_-5px_rgba(37,99,235,0.4)] text-white scale-110" 
-                    : step < currentStep 
-                    ? "bg-emerald-500 border-emerald-400 shadow-lg text-white" 
-                    : "bg-white border-slate-200 text-slate-400"
-                }`}>
-                  {step < currentStep ? <Check size={24} strokeWidth={3} /> : <span className="font-black text-xl">{step}</span>}
+                <div className="flex flex-col items-center gap-2 shrink-0">
+                  <div className={`w-14 h-14 rounded-[1.25rem] flex items-center justify-center transition-all duration-500 border-2 ${
+                    step === currentStep
+                      ? "bg-blue-600 border-blue-400 shadow-[0_15px_30px_-5px_rgba(37,99,235,0.4)] text-white scale-110"
+                      : step < currentStep
+                      ? "bg-emerald-500 border-emerald-400 shadow-lg text-white"
+                      : "bg-white border-slate-200 text-slate-400"
+                  }`}>
+                    {step < currentStep ? <Check size={24} strokeWidth={3} /> : <span className="font-black text-xl">{step}</span>}
+                  </div>
+                  <span className={`text-[10px] font-black uppercase tracking-widest ${
+                    step === currentStep ? "text-blue-600" : step < currentStep ? "text-emerald-500" : "text-slate-400"
+                  }`}>{label}</span>
                 </div>
                 {step < totalSteps && (
-                  <div className={`h-1.5 flex-1 mx-4 rounded-full transition-all duration-700 ${step < currentStep ? "bg-emerald-500 shadow-sm" : "bg-slate-200"}`}></div>
+                  <div className={`h-1.5 flex-1 mx-4 -mt-5 rounded-full transition-all duration-700 ${step < currentStep ? "bg-emerald-500 shadow-sm" : "bg-slate-200"}`}></div>
                 )}
               </div>
             ))}
@@ -420,6 +469,16 @@ export default function PatientRegister() {
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         className="w-full pl-16 pr-8 py-5 bg-white border-2 border-slate-200 rounded-3xl text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none font-bold shadow-sm cursor-text" />
                     </div>
+                    {formData.password && (
+                      <div className="flex items-center gap-3 pt-1 pl-1">
+                        <div className="flex gap-1 flex-1">
+                          {[1, 2, 3].map((i) => (
+                            <div key={i} className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${i <= passwordStrength.level ? passwordStrength.color : "bg-slate-200"}`} />
+                          ))}
+                        </div>
+                        <span className={`text-xs font-black ${passwordStrength.text}`}>{passwordStrength.label}</span>
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] pl-1">Confirm Password</label>
@@ -569,7 +628,7 @@ export default function PatientRegister() {
                         <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                         <input type="text" placeholder="Enter family member name" value={newMemberName}
                           onChange={(e) => setNewMemberName(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addFamilyMember())}
+                          onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addFamilyMember())}
                           className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none font-medium cursor-text" />
                       </div>
                       <button type="button" onClick={addFamilyMember} disabled={formData.familyMembers.length >= 9}
@@ -651,7 +710,7 @@ export default function PatientRegister() {
                           <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                           <input type="text" placeholder="Enter employee name" value={newMemberName}
                             onChange={(e) => setNewMemberName(e.target.value)}
-                            onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addCorporateMember())}
+                            onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCorporateMember())}
                             className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-2xl text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all outline-none font-medium cursor-text" />
                         </div>
                         <button type="button" onClick={addCorporateMember} disabled={formData.corporateMembers.length >= 499}

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 // Subscription prices in NGN
 const SUBSCRIPTION_PRICES = {
-  SINGLE: 2000,
+  SINGLE: 1000,
   FAMILY: 10000,
   CORPORATE: 100000,
 };
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
       const expiresAt = new Date();
       expiresAt.setFullYear(expiresAt.getFullYear() + 1);
 
-      const price = SUBSCRIPTION_PRICES[patient.subscriptionType as keyof typeof SUBSCRIPTION_PRICES] || 2000;
+      const price = SUBSCRIPTION_PRICES[patient.subscriptionType as keyof typeof SUBSCRIPTION_PRICES] || 1000;
 
       const updatedPatient = await prisma.patient.update({
         where: { id: patientId },

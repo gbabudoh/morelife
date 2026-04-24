@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 const SUBSCRIPTION_PRICES = {
-  SINGLE: 2000,
+  SINGLE: 1000,
   FAMILY: 10000,
   CORPORATE: 100000,
 };
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Patient not found" }, { status: 404 });
     }
 
-    const price = SUBSCRIPTION_PRICES[patient.subscriptionType as keyof typeof SUBSCRIPTION_PRICES] || 2000;
+    const price = SUBSCRIPTION_PRICES[patient.subscriptionType as keyof typeof SUBSCRIPTION_PRICES] || 1000;
     const reference = `SUB-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     // Create payment transaction record

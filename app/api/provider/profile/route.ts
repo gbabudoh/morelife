@@ -1,6 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+// Define local interfaces to handle data safely without 'any'
+interface HealthcarePackage {
+  id: string;
+  name: string;
+  [key: string]: unknown;
+}
+
+interface Doctor {
+  id: string;
+  name: string;
+  providerId: string;
+  [key: string]: unknown;
+}
+
+interface ProviderProfile {
+  id: string;
+  password?: string;
+  packages: HealthcarePackage[];
+  [key: string]: unknown;
+}
+
+interface PrismaWithDoctor {
+  doctor: {
+    findMany: (args: Record<string, unknown>) => Promise<Doctor[]>;
+  };
+}
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -10,74 +37,47 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Provider ID is required" }, { status: 400 });
     }
 
-    // Try to fetch with new fields, but handle if they don't exist
-    let provider;
-    let paymentSettings = null;
-    
-    try {
-      provider = await prisma.healthcareProvider.findUnique({
-        where: { id: providerId },
-        include: {
-          packages: {
-            orderBy: { createdAt: "desc" },
-          },
+    // 1. Fetch provider with only known relations (packages)
+    const provider = await prisma.healthcareProvider.findUnique({
+      where: { id: providerId },
+      include: {
+        packages: {
+          orderBy: { createdAt: "desc" },
         },
-      });
-
-      // Try to fetch payment settings if the table exists
-      try {
-        paymentSettings = await prisma.providerPaymentSettings.findUnique({
-          where: { providerId },
-        });
-      } catch (e) {
-        // Payment settings table doesn't exist yet, ignore
-        console.log("Payment settings not available yet");
-      }
-    } catch (error: any) {
-      console.error("Database error:", error);
-      return NextResponse.json({ 
-        error: "Database error",
-        details: error.message 
-      }, { status: 500 });
-    }
+      },
+    }) as unknown as ProviderProfile | null;
 
     if (!provider) {
       return NextResponse.json({ error: "Provider not found" }, { status: 404 });
     }
 
-    // Check if account is revoked (only if field exists)
-    if (provider.hasOwnProperty('isRevoked') && (provider as any).isRevoked) {
-      return NextResponse.json(
-        { 
-          error: "Account has been revoked",
-          reason: (provider as any).revokedReason,
-          revokedAt: (provider as any).revokedAt,
-        },
-        { status: 403 }
-      );
+    // 2. Fetch doctors separately to avoid runtime Prisma error if the relation is out of sync
+    let doctors: Doctor[] = [];
+    try {
+      // Cast prisma to specific interface for the separate query
+      doctors = await (prisma as unknown as PrismaWithDoctor).doctor.findMany({
+        where: { providerId },
+        orderBy: { createdAt: "desc" },
+      });
+    } catch (docError) {
+      console.warn("Could not fetch doctors separately:", docError);
+      // Fallback to empty array if the Doctor table doesn't exist yet
     }
 
     // Remove sensitive data
-    const { password, ...safeProvider } = provider;
-
-    // Add default values for new fields if they don't exist
-    const providerData = {
-      ...safeProvider,
-      mhpNumber: (safeProvider as any).mhpNumber || "MHP0000000000", // Temporary default
-      isActive: (safeProvider as any).isActive !== undefined ? (safeProvider as any).isActive : true,
-      isRevoked: (safeProvider as any).isRevoked !== undefined ? (safeProvider as any).isRevoked : false,
-    };
+    const safeProvider = { ...provider } as Record<string, unknown>;
+    delete safeProvider.password;
 
     return NextResponse.json({
-      provider: providerData,
-      packages: provider.packages,
-      paymentSettings: paymentSettings,
+      provider: safeProvider,
+      packages: provider.packages || [],
+      doctors: doctors,
     }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Profile fetch error:", error);
     return NextResponse.json({ 
       error: "Internal server error",
-      details: error.message 
+      details: error instanceof Error ? error.message : String(error)
     }, { status: 500 });
   }
 }

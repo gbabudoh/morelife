@@ -54,12 +54,12 @@ export default function Marketplace() {
 
   // Patient subscription state
   const [isGFPUser, setIsGFPUser] = useState(false);
-  const [isSubscriptionActive, setIsSubscriptionActive] = useState(false);
 
   // Purchase flow state
   const [selectedPackage, setSelectedPackage] = useState<HealthcarePackage | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
+  const [viewMode, setViewMode] = useState<"grid" | "map">("grid");
   const [purchaseStatus, setPurchaseStatus] = useState<"idle" | "success" | "error">("idle");
   const [selectedGateway, setSelectedGateway] = useState<PaymentGateway | null>(null);
 
@@ -112,7 +112,6 @@ export default function Marketplace() {
         if (response.ok) {
           const data = await response.json();
           setIsGFPUser(data.subscriptionPlanType === "GFP");
-          setIsSubscriptionActive(data.subscriptionStatus === "ACTIVE");
           
           // Redirect to dashboard if subscription is not active
           if (data.subscriptionStatus !== "ACTIVE") {
@@ -356,6 +355,10 @@ export default function Marketplace() {
           <h1 className="text-xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
             Healthcare Marketplace
           </h1>
+          <div className="flex bg-white/60 p-1.5 rounded-2xl border border-white/40 shadow-lg ml-auto">
+            <button onClick={() => setViewMode("grid")} className={`px-4 py-2 rounded-xl font-bold transition-all ${viewMode === "grid" ? "bg-blue-600 text-white shadow-md" : "text-gray-500 hover:bg-white/50"}`}>Grid</button>
+            <button onClick={() => setViewMode("map")} className={`px-4 py-2 rounded-xl font-bold transition-all ${viewMode === "map" ? "bg-blue-600 text-white shadow-md" : "text-gray-500 hover:bg-white/50"}`}>Map Feed</button>
+          </div>
         </div>
 
         {/* Filters - Mobile Optimized */}
@@ -637,6 +640,7 @@ export default function Marketplace() {
                       ) : (
                         <p className="text-lg sm:text-xl font-bold text-blue-600">
                           ₦{pkg.price.toLocaleString()}
+                          {pkg.providerType === "MEDICAL_CHARITY" && " (NGO)"}
                         </p>
                       )}
                     </div>
@@ -648,7 +652,7 @@ export default function Marketplace() {
                       }}
                       className="px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl text-xs sm:text-sm font-bold hover:shadow-lg active:scale-95 transition-all duration-200 flex items-center gap-1.5"
                     >
-                      View Details
+                      {pkg.isFree ? "Claim MH Access Code" : "View Details"}
                       <ChevronRight size={14} />
                     </button>
                   </div>
@@ -657,6 +661,20 @@ export default function Marketplace() {
             ))
           )}
         </div>
+
+        {viewMode === "map" && (
+          <div className="mt-8 p-12 bg-slate-900 rounded-[3rem] border-4 border-slate-800 text-center animate-in fade-in zoom-in duration-500">
+            <div className="w-20 h-20 bg-blue-600/20 rounded-full flex items-center justify-center mx-auto mb-6 text-blue-500">
+              <MapPin size={40} className="animate-bounce" />
+            </div>
+            <h2 className="text-3xl font-black text-white mb-4">NGO Outreach Map Feed</h2>
+            <p className="text-slate-400 max-w-lg mx-auto font-medium">Discovering free medical outreaches and clinics near you. The map interface is optimized for low-bandwidth data sovereignty.</p>
+            <div className="mt-8 flex justify-center gap-4">
+               <div className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-white/60 font-bold text-sm">3 Active Outreaches</div>
+               <div className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-white/60 font-bold text-sm">12 Partner NGO Sites</div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Package Details Modal - Mobile Optimized */}

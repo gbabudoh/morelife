@@ -1,6 +1,17 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { v4 as uuidv4 } from "uuid";
+import { Prisma, RedemptionStatus } from "@prisma/client";
+
+interface HealthcarePackageWithProvider {
+  id: string;
+  providerId: string;
+  price: number;
+  isVideoConsultation: boolean;
+  videoRoomId: string | null;
+  maxAttendees: number | null;
+  currentAttendees: number;
+}
 
 export async function POST(request: Request) {
   try {
@@ -30,13 +41,21 @@ export async function POST(request: Request) {
       );
     }
 
+    // 1.5. Check for attendee limits (NGO Outreaches)
+    const pkgTyped = pkg as unknown as HealthcarePackageWithProvider;
+    if (pkgTyped.maxAttendees !== null && pkgTyped.currentAttendees >= pkgTyped.maxAttendees) {
+      return NextResponse.json(
+        { error: "This outreach has reached its maximum capacity (Manifest Full)" },
+        { status: 400 }
+      );
+    }
+
     // 2. Generate Serial Number (PKG-YYYY-XXXXXX)
     const year = new Date().getFullYear();
     const randomStr = uuidv4().split('-')[0].toUpperCase();
     const serialNumber = `PKG-${year}-${randomStr}`;
 
     // 3. Prepare QR Code Data
-    // Storing essential verification data in JSON format
     const qrData = JSON.stringify({
       serial: serialNumber,
       mhNumber: patient.mhNumber,
@@ -45,21 +64,28 @@ export async function POST(request: Request) {
       timestamp: new Date().toISOString()
     });
 
-    // 4. Create Purchase Record
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const purchase = await (prisma as any).packagePurchase.create({
-      data: {
-        serialNumber,
-        patientId,
-        packageId,
-        providerId: pkg.providerId,
-        price: pkg.price,
-        qrCodeData: qrData,
-        redemptionStatus: "PENDING",
-      },
-    });
+    // 4. Create Purchase Record & Increment Attendees
+    const purchase = await prisma.$transaction([
+      prisma.packagePurchase.create({
+        data: {
+          serialNumber,
+          patientId,
+          packageId,
+          providerId: pkg.providerId,
+          price: pkg.price,
+          qrCodeData: qrData,
+          redemptionStatus: RedemptionStatus.PENDING,
+          isVideoConsultation: pkgTyped.isVideoConsultation,
+          videoRoomId: pkgTyped.videoRoomId || uuidv4(),
+        } as unknown as Prisma.PackagePurchaseCreateInput,
+      }),
+      prisma.healthcarePackage.update({
+        where: { id: packageId },
+        data: { currentAttendees: { increment: 1 } } as unknown as Prisma.HealthcarePackageUpdateInput,
+      }),
+    ]);
 
-    return NextResponse.json(purchase);
+    return NextResponse.json(purchase[0]);
   } catch (error) {
     console.error("Purchase error:", error);
     return NextResponse.json(
