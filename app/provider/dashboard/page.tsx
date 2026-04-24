@@ -378,7 +378,7 @@ export default function ProviderDashboard() {
 
       <div className="relative z-10">
         {/* Modern Header with Enhanced Glassmorphism */}
-        <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/40 border-b border-white/40 shadow-[0_4px_30px_rgba(0,0,0,0.03)] transition-all duration-300">
+        <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-white/80 border-b border-white/40 shadow-[0_4px_30px_rgba(0,0,0,0.03)] transition-all duration-300">
           <div className="container mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center">
@@ -386,8 +386,9 @@ export default function ProviderDashboard() {
                   src="/logo.png"
                   alt="MoreLife Healthcare"
                   width={160}
-                  height={64}
-                  className="object-contain"
+                  height={50}
+                  className="object-contain h-auto"
+                  priority
                   unoptimized
                 />
               </div>
@@ -438,7 +439,7 @@ export default function ProviderDashboard() {
           </div>
         </header>
 
-      <div className="container mx-auto px-6 py-12">
+      <div className="container mx-auto px-6 pt-32 pb-12">
         {/* Welcome Section with Micro-interaction */}
           <div className="mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div className="flex flex-col md:flex-row md:items-end gap-6 justify-between">

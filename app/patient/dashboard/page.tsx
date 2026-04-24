@@ -237,7 +237,7 @@ export default function PatientDashboard() {
       <div className="relative z-10">
 
         {/* ── Header ─────────────────────────────────────────────────────── */}
-        <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 border-b border-slate-100 shadow-sm">
+        <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-white/80 border-b border-slate-100 shadow-sm">
           <div className="max-w-7xl mx-auto px-4 lg:px-6 py-3 lg:py-4 flex items-center justify-between">
 
             {/* Mobile: hamburger */}
@@ -250,7 +250,7 @@ export default function PatientDashboard() {
 
             {/* Logo */}
             <div className="absolute left-1/2 -translate-x-1/2 lg:static lg:translate-x-0">
-              <Image src="/logo.png" alt="MoreLife" width={120} height={48} className="object-contain lg:w-35" unoptimized />
+              <Image src="/logo.png" alt="MoreLife" width={120} height={35} className="object-contain h-auto lg:w-35" priority unoptimized />
             </div>
 
             {/* Mobile spacer */}
@@ -302,7 +302,7 @@ export default function PatientDashboard() {
         </header>
 
         {/* ── Main content ─────────────────────────────────────────────── */}
-        <div className="max-w-7xl mx-auto px-4 lg:px-6 py-6 lg:py-10">
+        <div className="max-w-7xl mx-auto px-4 lg:px-6 pt-24 lg:pt-32 pb-6 lg:py-10">
 
           {/* Welcome */}
           <div className="mb-8 lg:mb-12">
