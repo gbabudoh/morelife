@@ -20,15 +20,25 @@ model Patient {
   subscriptionPlanType  SubscriptionPlanType  @default(PAID)
   subscriptionPrice     Float?
   subscriptionExpiresAt DateTime?
-  gfpCode               String?               // Government Free Programme code
+  gfpCode               String?
   gfpActivatedAt        DateTime?
   createdAt             DateTime              @default(now())
   updatedAt             DateTime              @updatedAt
   memberCount           Int                   @default(1)
-  familyMembers         String[]              // Array of family member names
-  businessName          String?               // For corporate subscriptions
+  familyMembers         String[]
+  businessName          String?
   purchases             PackagePurchase[]
   packages              PatientPackage[]
+  sessions              PatientSession[]
+}
+
+model PatientSession {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  patientId String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  patient   Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
 }
 
 model HealthcareProvider {
@@ -67,10 +77,46 @@ model HealthcareProvider {
   verifiedBy                 String?
   wasteManagementCert        String?
   yearStarted                Int?
+  taxIdNumber                String?
+  proofOfAddressDoc          String?
+  directorIdDoc              String?
+  accreditationCert          String?
+  goodStandingCert           String?
+  dataProtectionRegDoc       String?
+  medicalLicenseExpiry       String?
+  fireSafetyExpiry           String?
+  liabilityInsuranceExpiry   String?
+  professionalLicenseExpiry  String?
   packages                   HealthcarePackage[]
   purchases                  PackagePurchase[]
   paymentSettings            ProviderPaymentSettings?
   doctors                    Doctor[]
+  sessions                   ProviderSession[]
+}
+
+model Doctor {
+  id            String             @id @default(cuid())
+  name          String
+  specialty     String
+  email         String             @unique
+  phone         String?
+  licenseNumber String?
+  isOnline      Boolean            @default(false)
+  avatar        String?
+  password      String?
+  providerId    String
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  provider      HealthcareProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+}
+
+model ProviderSession {
+  id         String             @id @default(cuid())
+  token      String             @unique
+  providerId String
+  expiresAt  DateTime
+  createdAt  DateTime           @default(now())
+  provider   HealthcareProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
 }
 
 model ProviderPaymentSettings {
@@ -122,6 +168,12 @@ model HealthcarePackage {
   validUntil          DateTime?
   termsAndConditions  String?
   mhpId               String?
+  isVideoConsultation Boolean            @default(false)
+  videoRoomId         String?
+  maxAttendees        Int?
+  currentAttendees    Int                @default(0)
+  sessionCount        Int                @default(1)
+  validityDays        Int                @default(180)
   createdAt           DateTime           @default(now())
   updatedAt           DateTime           @updatedAt
   provider            HealthcareProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
@@ -150,13 +202,15 @@ model PackagePurchase {
   redemptionStatus RedemptionStatus   @default(PENDING)
   redeemedAt       DateTime?
   redeemedBy       String?
-  qrCodeData       String
-  price            Float
-  createdAt        DateTime           @default(now())
-  updatedAt        DateTime           @updatedAt
-  package          HealthcarePackage  @relation(fields: [packageId], references: [id], onDelete: Cascade)
-  patient          Patient            @relation(fields: [patientId], references: [id], onDelete: Cascade)
-  provider         HealthcareProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  qrCodeData          String
+  price               Float
+  isVideoConsultation Boolean            @default(false)
+  videoRoomId         String?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  package             HealthcarePackage  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  patient             Patient            @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  provider            HealthcareProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
 }
 
 model PaymentTransaction {

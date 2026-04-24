@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { verifyProviderSession } from "@/lib/session";
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,6 +12,10 @@ export async function GET(request: NextRequest) {
         { error: "Provider ID is required" },
         { status: 400 }
       );
+    }
+
+    if (!(await verifyProviderSession(request, providerId))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Get or create payment settings
@@ -52,6 +57,10 @@ export async function POST(request: NextRequest) {
         { error: "Provider ID is required" },
         { status: 400 }
       );
+    }
+
+    if (!(await verifyProviderSession(request, providerId))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Validate that at least one gateway is enabled if keys are provided

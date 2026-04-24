@@ -86,6 +86,13 @@ export default function ProviderDashboard() {
   const [selectedPackage,      setSelectedPackage]      = useState<HealthcarePackage | null>(null);
   const [updateForm,           setUpdateForm]           = useState(emptyForm);
   const [toast,                setToast]                = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [token,                setToken]                = useState<string | null>(null);
+
+  const authHeader = (extra?: Record<string, string>) => ({
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...extra,
+  });
 
   const showToast = (message: string, type: "success" | "error" = "success") => {
     setToast({ message, type });
@@ -106,9 +113,13 @@ export default function ProviderDashboard() {
     const fetchProviderProfile = async () => {
       try {
         const providerId = localStorage.getItem("providerId");
-        if (!providerId) { router.replace("/provider/login"); return; }
+        const storedToken = localStorage.getItem("providerToken");
+        if (!providerId || !storedToken) { router.replace("/provider/login"); return; }
+        setToken(storedToken);
 
-        const response = await fetch(`/api/provider/profile?providerId=${providerId}`);
+        const response = await fetch(`/api/provider/profile?providerId=${providerId}`, {
+          headers: { Authorization: `Bearer ${storedToken}` },
+        });
         const data = await response.json();
 
         if (response.ok) {
@@ -134,7 +145,7 @@ export default function ProviderDashboard() {
     try {
       const response = await fetch("/api/provider/packages", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeader(),
         body: JSON.stringify({ ...packageForm, providerId }),
       });
       if (response.ok) {
@@ -157,7 +168,7 @@ export default function ProviderDashboard() {
     try {
       const response = await fetch("/api/provider/packages", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeader(),
         body: JSON.stringify({ ...updateForm, id: selectedPackage.id, providerId: localStorage.getItem("providerId") }),
       });
       if (response.ok) {
@@ -179,7 +190,10 @@ export default function ProviderDashboard() {
     setLoading(true);
     try {
       const providerId = localStorage.getItem("providerId");
-      const response = await fetch(`/api/provider/packages?id=${selectedPackage.id}&providerId=${providerId}`, { method: "DELETE" });
+      const response = await fetch(`/api/provider/packages?id=${selectedPackage.id}&providerId=${providerId}`, {
+        method: "DELETE",
+        headers: authHeader(),
+      });
       if (response.ok) {
         setPackages(packages.filter(p => p.id !== selectedPackage.id));
         setShowDeleteModal(false);
@@ -203,7 +217,7 @@ export default function ProviderDashboard() {
       const providerId = localStorage.getItem("providerId");
       const response = await fetch("/api/provider/payment-settings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeader(),
         body: JSON.stringify({ providerId, settings }),
       });
       if (response.ok) {
@@ -218,8 +232,16 @@ export default function ProviderDashboard() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const t = localStorage.getItem("providerToken");
+    if (t) {
+      await fetch("/api/provider/logout", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${t}` },
+      }).catch(() => {});
+    }
     localStorage.removeItem("providerId");
+    localStorage.removeItem("providerToken");
     router.replace("/provider/login");
   };
 
@@ -948,11 +970,15 @@ export default function ProviderDashboard() {
         <StaffManagement
           doctors={doctors}
           providerId={provider.id}
+          token={token ?? ""}
           onClose={() => setShowStaffManagement(false)}
           onRefresh={() => {
             const providerId = localStorage.getItem("providerId");
-            if (providerId) {
-              fetch(`/api/provider/profile?providerId=${providerId}`)
+            const t = localStorage.getItem("providerToken");
+            if (providerId && t) {
+              fetch(`/api/provider/profile?providerId=${providerId}`, {
+                headers: { Authorization: `Bearer ${t}` },
+              })
                 .then(res => res.json())
                 .then(data => { if (data.doctors) setDoctors(data.doctors); });
             }

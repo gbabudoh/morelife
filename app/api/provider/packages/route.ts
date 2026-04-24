@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { verifyProviderSession } from "@/lib/session";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const prismaClient = prisma as any;
@@ -15,6 +16,10 @@ export async function POST(request: NextRequest) {
 
     if (!providerId || !name) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    if (!(await verifyProviderSession(request, providerId))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Confirm the provider exists and is active
@@ -66,6 +71,10 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: "Package ID and Provider ID are required" }, { status: 400 });
     }
 
+    if (!(await verifyProviderSession(request, providerId))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     // Verify ownership before updating
     const existing = await prismaClient.healthcarePackage.findUnique({
       where: { id },
@@ -113,6 +122,10 @@ export async function DELETE(request: NextRequest) {
 
     if (!id || !providerId) {
       return NextResponse.json({ error: "Package ID and Provider ID are required" }, { status: 400 });
+    }
+
+    if (!(await verifyProviderSession(request, providerId))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Verify ownership before deleting

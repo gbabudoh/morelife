@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { verifyProviderSession } from "@/lib/session";
 
 // Define local interfaces to handle data safely without 'any'
 interface HealthcarePackage {
@@ -35,6 +36,10 @@ export async function GET(request: NextRequest) {
 
     if (!providerId) {
       return NextResponse.json({ error: "Provider ID is required" }, { status: 400 });
+    }
+
+    if (!(await verifyProviderSession(request, providerId))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // 1. Fetch provider with only known relations (packages)

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { verifyPatientSession } from "@/lib/session";
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,6 +9,10 @@ export async function GET(request: NextRequest) {
 
     if (!patientId) {
       return NextResponse.json({ error: "Patient ID required" }, { status: 400 });
+    }
+
+    if (!(await verifyPatientSession(request, patientId))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

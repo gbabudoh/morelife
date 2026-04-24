@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { verifyPatientSession } from "@/lib/session";
 
 // Subscription prices in NGN
 const SUBSCRIPTION_PRICES = {
@@ -22,6 +23,10 @@ export async function POST(request: NextRequest) {
 
     if (!patientId) {
       return NextResponse.json({ error: "Patient ID is required" }, { status: 400 });
+    }
+
+    if (!(await verifyPatientSession(request, patientId))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const patient = await prisma.patient.findUnique({ where: { id: patientId } });
@@ -127,6 +132,10 @@ export async function GET(request: NextRequest) {
 
     if (!patientId) {
       return NextResponse.json({ error: "Patient ID is required" }, { status: 400 });
+    }
+
+    if (!(await verifyPatientSession(request, patientId))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const patient = await prisma.patient.findUnique({

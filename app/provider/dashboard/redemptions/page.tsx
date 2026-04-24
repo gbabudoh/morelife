@@ -72,12 +72,15 @@ export default function RedemptionsPage() {
     const fetchProviderData = async () => {
       try {
         const providerId = localStorage.getItem('providerId');
-        if (!providerId) {
+        const token = localStorage.getItem('providerToken');
+        if (!providerId || !token) {
           router.replace('/provider/login');
           return;
         }
 
-        const response = await fetch(`/api/provider/profile?providerId=${providerId}`);
+        const response = await fetch(`/api/provider/profile?providerId=${providerId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         const data = await response.json();
 
         if (response.ok) {

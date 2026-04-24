@@ -98,13 +98,19 @@ export default function PatientDashboard() {
   const [activationError,       setActivationError]       = useState("");
   const [selectedGateway,       setSelectedGateway]       = useState<"flutterwave" | "paystack">("flutterwave");
   const [activeVideoCall,       setActiveVideoCall]       = useState<{ room: string; username: string } | null>(null);
+  const [token,                 setToken]                 = useState<string | null>(null);
+
+  const authHeader = (t?: string | null) => ({
+    "Content-Type": "application/json",
+    ...((t ?? token) ? { Authorization: `Bearer ${t ?? token}` } : {}),
+  });
 
   useEffect(() => {
-    const handlePaymentCallback = async (patientId: string, reference: string) => {
+    const handlePaymentCallback = async (patientId: string, reference: string, t: string) => {
       try {
         const res = await fetch("/api/patient/activate-subscription", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: authHeader(t),
           body: JSON.stringify({ patientId, activationType: "PAID", paymentReference: reference }),
         });
         if (res.ok) {
@@ -118,9 +124,13 @@ export default function PatientDashboard() {
     const fetchPatient = async () => {
       try {
         const patientId = localStorage.getItem("patientId");
-        if (!patientId) { router.push("/patient/login"); return; }
+        const storedToken = localStorage.getItem("patientToken");
+        if (!patientId || !storedToken) { router.push("/patient/login"); return; }
+        setToken(storedToken);
 
-        const response = await fetch(`/api/patient/me?id=${patientId}`);
+        const response = await fetch(`/api/patient/me?id=${patientId}`, {
+          headers: authHeader(storedToken),
+        });
         const data     = await response.json();
 
         if (response.ok) {
@@ -128,12 +138,15 @@ export default function PatientDashboard() {
           const paymentType = searchParams.get("payment");
           const reference   = searchParams.get("reference");
           if (paymentType === "subscription" && reference) {
-            handlePaymentCallback(patientId, reference);
+            handlePaymentCallback(patientId, reference, storedToken);
           }
-          const purchasesRes = await fetch(`/api/patient/purchases?patientId=${patientId}`);
+          const purchasesRes = await fetch(`/api/patient/purchases?patientId=${patientId}`, {
+            headers: authHeader(storedToken),
+          });
           if (purchasesRes.ok) { setPurchases(await purchasesRes.json()); }
         } else if (response.status === 404 || response.status === 401) {
           localStorage.removeItem("patientId");
+          localStorage.removeItem("patientToken");
           router.push("/patient/login");
         } else {
           setFetchError(data.error || "Failed to load patient data");
@@ -149,12 +162,15 @@ export default function PatientDashboard() {
   }, [router, searchParams]);
 
   const handleLogout = async () => {
-    try {
-      await fetch("/api/logout", { method: "POST" });
-    } catch (error) {
-      console.error("Logout error:", error);
+    const t = localStorage.getItem("patientToken");
+    if (t) {
+      await fetch("/api/patient/logout", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${t}` },
+      }).catch(() => {});
     }
     localStorage.removeItem("patientId");
+    localStorage.removeItem("patientToken");
     router.push("/patient/login");
   };
 
@@ -168,7 +184,7 @@ export default function PatientDashboard() {
       try {
         const res  = await fetch("/api/patient/activate-subscription", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: authHeader(),
           body: JSON.stringify({ patientId, activationType: "GFP", gfpCode: gfpCode.trim() }),
         });
         const data = await res.json();
@@ -181,7 +197,7 @@ export default function PatientDashboard() {
       try {
         const res  = await fetch("/api/patient/subscription-payment", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: authHeader(),
           body: JSON.stringify({ patientId, gateway: selectedGateway }),
         });
         const data = await res.json();

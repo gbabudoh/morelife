@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { verifyPatientSession } from "@/lib/session";
 
 const SUBSCRIPTION_PRICES = {
   SINGLE: 1000,
@@ -14,6 +15,10 @@ export async function POST(request: NextRequest) {
 
     if (!patientId || !gateway) {
       return NextResponse.json({ error: "Patient ID and gateway are required" }, { status: 400 });
+    }
+
+    if (!(await verifyPatientSession(request, patientId))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const patient = await prisma.patient.findUnique({ where: { id: patientId } });

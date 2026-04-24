@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { verifyProviderSession } from "@/lib/session";
 
 // Casting prisma to any is a temporary workaround to resolve the "Property 'doctor' does not exist" 
 // TypeScript error until the local environment's type generation fully synchronizes.
@@ -14,6 +15,10 @@ export async function GET(request: NextRequest) {
 
     if (!providerId) {
       return NextResponse.json({ error: "Provider ID is required" }, { status: 400 });
+    }
+
+    if (!(await verifyProviderSession(request, providerId))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const doctors = await prismaClient.doctor.findMany({
@@ -35,6 +40,10 @@ export async function POST(request: NextRequest) {
 
     if (!providerId || !name || !email) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+
+    if (!(await verifyProviderSession(request, providerId))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Check if doctor already exists
@@ -71,6 +80,10 @@ export async function PATCH(request: NextRequest) {
 
     if (!doctorId || !providerId) {
       return NextResponse.json({ error: "Doctor ID and Provider ID are required" }, { status: 400 });
+    }
+
+    if (!(await verifyProviderSession(request, providerId))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Verify the doctor belongs to this provider
@@ -110,6 +123,10 @@ export async function DELETE(request: NextRequest) {
 
     if (!doctorId || !providerId) {
       return NextResponse.json({ error: "Doctor ID and Provider ID are required" }, { status: 400 });
+    }
+
+    if (!(await verifyProviderSession(request, providerId))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Verify ownership before deleting

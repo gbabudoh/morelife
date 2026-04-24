@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { v4 as uuidv4 } from "uuid";
 import { Prisma, RedemptionStatus } from "@prisma/client";
+import { verifyPatientSession } from "@/lib/session";
 
 interface HealthcarePackageWithProvider {
   id: string;
@@ -13,15 +15,20 @@ interface HealthcarePackageWithProvider {
   currentAttendees: number;
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const { patientId, packageId } = await request.json();
+    const body = await request.json();
+    const { patientId, packageId } = body;
 
     if (!patientId || !packageId) {
       return NextResponse.json(
         { error: "Patient ID and Package ID are required" },
         { status: 400 }
       );
+    }
+
+    if (!(await verifyPatientSession(request, patientId))) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // 1. Fetch package and patient details

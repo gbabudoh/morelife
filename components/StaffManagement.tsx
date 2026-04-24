@@ -19,11 +19,13 @@ export interface Doctor {
 interface StaffManagementProps {
   doctors: Doctor[];
   providerId: string;
+  token: string;
   onClose: () => void;
   onRefresh: () => void;
 }
 
-export default function StaffManagement({ doctors, providerId, onClose, onRefresh }: StaffManagementProps) {
+export default function StaffManagement({ doctors, providerId, token, onClose, onRefresh }: StaffManagementProps) {
+  const authHeader = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
   const [showAddForm, setShowAddForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -41,7 +43,7 @@ export default function StaffManagement({ doctors, providerId, onClose, onRefres
     try {
       const response = await fetch("/api/provider/doctors", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeader,
         body: JSON.stringify({ ...form, providerId }),
       });
 
@@ -65,7 +67,7 @@ export default function StaffManagement({ doctors, providerId, onClose, onRefres
     try {
       await fetch("/api/provider/doctors", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeader,
         body: JSON.stringify({ doctorId, providerId, isOnline: !currentStatus }),
       });
       onRefresh();
@@ -75,7 +77,7 @@ export default function StaffManagement({ doctors, providerId, onClose, onRefres
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 sm:p-6">
       <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose}></div>
       
       <div className="relative w-full max-w-4xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -190,14 +192,14 @@ export default function StaffManagement({ doctors, providerId, onClose, onRefres
 
           <div className="grid gap-4">
             {doctors.length === 0 ? (
-              <div className="text-center py-12 bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200">
+              <div className="text-center py-12 bg-slate-50 rounded-4xl border-2 border-dashed border-slate-200">
                 <p className="text-slate-400 font-bold italic">No staff members added yet.</p>
               </div>
             ) : (
               doctors.map((doctor) => (
                 <div key={doctor.id} className="p-6 bg-white border border-slate-100 rounded-3xl hover:border-blue-200 transition-all flex items-center justify-between group shadow-sm">
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 bg-gradient-to-tr from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center text-slate-400">
+                    <div className="w-14 h-14 bg-linear-to-tr from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center text-slate-400">
                       <User size={28} />
                     </div>
                     <div>

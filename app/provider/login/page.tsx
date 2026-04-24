@@ -34,6 +34,7 @@ export default function ProviderLogin() {
       if (response.ok) {
         const data = await response.json();
         localStorage.setItem("providerId", data.providerId);
+        localStorage.setItem("providerToken", data.token);
         router.replace("/provider/dashboard");
       } else {
         const data = await response.json();
@@ -50,8 +51,8 @@ export default function ProviderLogin() {
     <div className="min-h-screen bg-[#F8FAFC] relative flex items-center justify-center py-12 px-4 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] right-[-5%] w-[400px] h-[400px] bg-emerald-100/40 rounded-full blur-[100px]" />
-        <div className="absolute bottom-[-10%] left-[-5%] w-[400px] h-[400px] bg-blue-100/40 rounded-full blur-[100px]" />
+        <div className="absolute top-[-10%] right-[-5%] w-100 h-100 bg-emerald-100/40 rounded-full blur-[100px]" />
+        <div className="absolute bottom-[-10%] left-[-5%] w-100 h-100 bg-blue-100/40 rounded-full blur-[100px]" />
       </div>
 
       <div className="max-w-md w-full relative z-10">
@@ -88,7 +89,7 @@ export default function ProviderLogin() {
           {/* Error */}
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
-              <div className="w-7 h-7 rounded-full bg-red-100 flex items-center justify-center text-sm font-black flex-shrink-0">!</div>
+              <div className="w-7 h-7 rounded-full bg-red-100 flex items-center justify-center text-sm font-black shrink-0">!</div>
               <p className="text-sm font-bold">{error}</p>
             </div>
           )}
