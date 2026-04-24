@@ -67,10 +67,22 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
-    const { doctorId, isOnline, password } = body;
+    const { doctorId, providerId, isOnline, password } = body;
 
-    if (!doctorId) {
-      return NextResponse.json({ error: "Doctor ID is required" }, { status: 400 });
+    if (!doctorId || !providerId) {
+      return NextResponse.json({ error: "Doctor ID and Provider ID are required" }, { status: 400 });
+    }
+
+    // Verify the doctor belongs to this provider
+    const existing = await prismaClient.doctor.findUnique({
+      where: { id: doctorId },
+      select: { providerId: true },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "Doctor not found" }, { status: 404 });
+    }
+    if (existing.providerId !== providerId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -87,5 +99,36 @@ export async function PATCH(request: NextRequest) {
   } catch (error) {
     console.error("Error updating doctor:", error);
     return NextResponse.json({ error: "Failed to update doctor" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const doctorId = searchParams.get("doctorId");
+    const providerId = searchParams.get("providerId");
+
+    if (!doctorId || !providerId) {
+      return NextResponse.json({ error: "Doctor ID and Provider ID are required" }, { status: 400 });
+    }
+
+    // Verify ownership before deleting
+    const existing = await prismaClient.doctor.findUnique({
+      where: { id: doctorId },
+      select: { providerId: true },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "Doctor not found" }, { status: 404 });
+    }
+    if (existing.providerId !== providerId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    await prismaClient.doctor.delete({ where: { id: doctorId } });
+
+    return NextResponse.json({ message: "Doctor removed successfully" });
+  } catch (error) {
+    console.error("Error deleting doctor:", error);
+    return NextResponse.json({ error: "Failed to delete doctor" }, { status: 500 });
   }
 }

@@ -1,25 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// Casting prisma to any is a temporary workaround to resolve "property does not exist" 
-// TypeScript errors until the local environment's type generation fully synchronizes.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const prismaClient = prisma as any;
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { 
-      name, description, price, duration, treatmentType, 
-      isFree, validFrom, validUntil, termsAndConditions, 
-      mhpId, providerId, isVideoConsultation, sessionCount, validityDays 
+    const {
+      name, description, price, duration, treatmentType,
+      isFree, validFrom, validUntil, termsAndConditions,
+      mhpId, providerId, isVideoConsultation, sessionCount, validityDays
     } = body;
 
     if (!providerId || !name) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // Confirm the provider exists and is active
+    const provider = await prismaClient.healthcareProvider.findUnique({
+      where: { id: providerId },
+      select: { id: true, isRevoked: true },
+    });
+    if (!provider || provider.isRevoked) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    }
+
     const pkg = await prismaClient.healthcarePackage.create({
       data: {
         name,
@@ -49,17 +55,29 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
-    const { 
-      id, name, description, price, duration, treatmentType, 
-      isFree, validFrom, validUntil, termsAndConditions, 
+    const {
+      id, providerId,
+      name, description, price, duration, treatmentType,
+      isFree, validFrom, validUntil, termsAndConditions,
       mhpId, isVideoConsultation, sessionCount, validityDays, isActive
     } = body;
 
-    if (!id) {
-      return NextResponse.json({ error: "Package ID is required" }, { status: 400 });
+    if (!id || !providerId) {
+      return NextResponse.json({ error: "Package ID and Provider ID are required" }, { status: 400 });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // Verify ownership before updating
+    const existing = await prismaClient.healthcarePackage.findUnique({
+      where: { id },
+      select: { providerId: true },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "Package not found" }, { status: 404 });
+    }
+    if (existing.providerId !== providerId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     const pkg = await prismaClient.healthcarePackage.update({
       where: { id },
       data: {
@@ -91,15 +109,25 @@ export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
+    const providerId = searchParams.get("providerId");
 
-    if (!id) {
-      return NextResponse.json({ error: "Package ID is required" }, { status: 400 });
+    if (!id || !providerId) {
+      return NextResponse.json({ error: "Package ID and Provider ID are required" }, { status: 400 });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await prismaClient.healthcarePackage.delete({
+    // Verify ownership before deleting
+    const existing = await prismaClient.healthcarePackage.findUnique({
       where: { id },
+      select: { providerId: true },
     });
+    if (!existing) {
+      return NextResponse.json({ error: "Package not found" }, { status: 404 });
+    }
+    if (existing.providerId !== providerId) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    await prismaClient.healthcarePackage.delete({ where: { id } });
 
     return NextResponse.json({ message: "Package deleted successfully" });
   } catch (error) {

@@ -66,7 +66,7 @@ export default function StaffManagement({ doctors, providerId, onClose, onRefres
       await fetch("/api/provider/doctors", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ doctorId, isOnline: !currentStatus }),
+        body: JSON.stringify({ doctorId, providerId, isOnline: !currentStatus }),
       });
       onRefresh();
     } catch (error) {
